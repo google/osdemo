@@ -1,6 +1,7 @@
 mod pl011;
 
 use super::Platform;
+use log::error;
 use pl011::Uart;
 use smccc::{psci::system_off, Hvc};
 
@@ -14,7 +15,8 @@ impl Platform for Qemu {
 
     fn power_off() -> ! {
         system_off::<Hvc>().unwrap();
-        panic!("PSCI_SYSTEM_OFF returned unexpectedly");
+        error!("PSCI_SYSTEM_OFF returned unexpectedly");
+        loop {}
     }
 
     unsafe fn console() -> Uart {
