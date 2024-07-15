@@ -3,10 +3,11 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod exceptions;
+mod logger;
 mod platform;
 
 use core::{fmt::Write, panic::PanicInfo};
-use log::error;
+use log::{error, info, LevelFilter};
 use platform::{Platform, PlatformImpl};
 
 #[no_mangle]
@@ -14,7 +15,9 @@ extern "C" fn main() {
     // SAFETY: We only call `PlatformImpl::console` here, once on boot.
     let mut console = unsafe { PlatformImpl::console() };
     writeln!(console, "DemoOS starting...").unwrap();
+    logger::init(console, LevelFilter::Info).unwrap();
 
+    info!("Powering off.");
     PlatformImpl::power_off();
 }
 

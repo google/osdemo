@@ -2,6 +2,8 @@ mod qemu;
 
 pub use qemu::Qemu as PlatformImpl;
 
+pub type Console = <PlatformImpl as Platform>::Console;
+
 /// Platform-specific code.
 pub trait Platform {
     type Console;
