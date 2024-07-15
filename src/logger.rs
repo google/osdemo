@@ -13,9 +13,13 @@
 // limitations under the License.
 
 use crate::platform::Console;
-use core::fmt::Write;
+use core::{
+    convert::Infallible,
+    fmt::{self},
+};
+use embedded_io::{ErrorType, Read, Write};
 use log::{LevelFilter, Log, Metadata, Record, SetLoggerError};
-use spin::mutex::SpinMutex;
+use spin::mutex::{SpinMutex, SpinMutexGuard};
 
 static LOGGER: Logger<Console> = Logger {
     console: SpinMutex::new(None),
@@ -43,11 +47,48 @@ impl<T: Send + Write> Log for Logger<T> {
     fn flush(&self) {}
 }
 
+#[derive(Copy, Clone)]
+pub struct SharedConsole {
+    logger: &'static Logger<Console>,
+}
+
+impl SharedConsole {
+    fn lock(&self) -> SpinMutexGuard<Option<Console>> {
+        self.logger.console.lock()
+    }
+}
+
+impl ErrorType for SharedConsole {
+    type Error = Infallible;
+}
+
+impl fmt::Write for SharedConsole {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.lock().as_mut().unwrap().write_str(s)
+    }
+}
+
+impl Write for SharedConsole {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
+        self.lock().as_mut().unwrap().write(buf)
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        self.lock().as_mut().unwrap().flush()
+    }
+}
+
+impl Read for SharedConsole {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
+        self.lock().as_mut().unwrap().read(buf)
+    }
+}
+
 /// Initialises console logger.
-pub fn init(console: Console, max_level: LevelFilter) -> Result<(), SetLoggerError> {
+pub fn init(console: Console, max_level: LevelFilter) -> Result<SharedConsole, SetLoggerError> {
     LOGGER.console.lock().replace(console);
 
     log::set_logger(&LOGGER)?;
     log::set_max_level(max_level);
-    Ok(())
+    Ok(SharedConsole { logger: &LOGGER })
 }

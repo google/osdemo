@@ -1,5 +1,6 @@
-use log::info;
+use core::fmt::Write;
+use embedded_io::Read;
 
-pub fn main(console: Console) {
-    info!("Shell starting")
+pub fn main(console: &mut (impl Write + Read)) {
+    writeln!(console, "Shell starting").unwrap();
 }

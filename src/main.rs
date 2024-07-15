@@ -17,9 +17,9 @@ extern "C" fn main() {
     // SAFETY: We only call `PlatformImpl::console` here, once on boot.
     let mut console = unsafe { PlatformImpl::console() };
     writeln!(console, "DemoOS starting...").unwrap();
-    logger::init(console, LevelFilter::Info).unwrap();
+    let mut console = logger::init(console, LevelFilter::Info).unwrap();
 
-    shell::main();
+    shell::main(&mut console);
 
     info!("Powering off.");
     PlatformImpl::power_off();
