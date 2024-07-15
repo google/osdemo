@@ -2,14 +2,15 @@
 #![no_std]
 
 mod exceptions;
+mod platform;
 
 use core::panic::PanicInfo;
 use log::error;
-use smccc::{psci::system_off, Hvc};
+use platform::{Platform, PlatformImpl};
 
 #[no_mangle]
 extern "C" fn main() {
-    system_off::<Hvc>().unwrap();
+    PlatformImpl::power_off();
 }
 
 #[panic_handler]
