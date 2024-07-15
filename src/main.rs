@@ -4,12 +4,16 @@
 mod exceptions;
 mod platform;
 
-use core::panic::PanicInfo;
+use core::{fmt::Write, panic::PanicInfo};
 use log::error;
 use platform::{Platform, PlatformImpl};
 
 #[no_mangle]
 extern "C" fn main() {
+    // SAFETY: We only call `PlatformImpl::console` here, once on boot.
+    let mut console = unsafe { PlatformImpl::console() };
+    writeln!(console, "DemoOS starting...").unwrap();
+
     PlatformImpl::power_off();
 }
 
