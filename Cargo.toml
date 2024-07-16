@@ -9,6 +9,7 @@ embedded-io = "0.6.1"
 log = "0.4.22"
 smccc = "0.1.1"
 spin = { version = "0.9.8", features = ["once"] }
+tinyvec = "1.8.0"
 
 [build-dependencies]
 cc = "1.1.5"
