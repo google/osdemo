@@ -3,6 +3,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod apps;
+pub mod drivers;
 mod exceptions;
 mod logger;
 mod platform;

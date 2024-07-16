@@ -1,8 +1,6 @@
-mod pl011;
-
 use super::Platform;
+use crate::drivers::pl011::Uart;
 use log::error;
-use pl011::Uart;
 use smccc::{psci::system_off, Hvc};
 
 pub const UART_BASE_ADDRESS: *mut u32 = 0x900_0000 as _;
