@@ -19,14 +19,15 @@ use core::{
 };
 use embedded_io::{ErrorType, Read, Write};
 use log::{LevelFilter, Log, Metadata, Record, SetLoggerError};
-use spin::mutex::{SpinMutex, SpinMutexGuard};
-
-static LOGGER: Logger<Console> = Logger {
-    console: SpinMutex::new(None),
+use spin::{
+    mutex::{SpinMutex, SpinMutexGuard},
+    Once,
 };
 
+static LOGGER: Once<Logger<Console>> = Once::new();
+
 struct Logger<T: Send + Write> {
-    console: SpinMutex<Option<T>>,
+    console: SpinMutex<T>,
 }
 
 impl<T: Send + Write> Log for Logger<T> {
@@ -36,7 +37,7 @@ impl<T: Send + Write> Log for Logger<T> {
 
     fn log(&self, record: &Record) {
         writeln!(
-            self.console.lock().as_mut().unwrap(),
+            self.console.lock(),
             "[{}] {}",
             record.level(),
             record.args()
@@ -53,7 +54,7 @@ pub struct SharedConsole {
 }
 
 impl SharedConsole {
-    fn lock(&self) -> SpinMutexGuard<Option<Console>> {
+    fn lock(&self) -> SpinMutexGuard<Console> {
         self.logger.console.lock()
     }
 }
@@ -64,31 +65,33 @@ impl ErrorType for SharedConsole {
 
 impl fmt::Write for SharedConsole {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        self.lock().as_mut().unwrap().write_str(s)
+        self.lock().write_str(s)
     }
 }
 
 impl Write for SharedConsole {
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
-        self.lock().as_mut().unwrap().write(buf)
+        self.lock().write(buf)
     }
 
     fn flush(&mut self) -> Result<(), Self::Error> {
-        self.lock().as_mut().unwrap().flush()
+        self.lock().flush()
     }
 }
 
 impl Read for SharedConsole {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
-        self.lock().as_mut().unwrap().read(buf)
+        self.lock().read(buf)
     }
 }
 
 /// Initialises console logger.
 pub fn init(console: Console, max_level: LevelFilter) -> Result<SharedConsole, SetLoggerError> {
-    LOGGER.console.lock().replace(console);
+    let logger = LOGGER.call_once(|| Logger {
+        console: SpinMutex::new(console),
+    });
 
-    log::set_logger(&LOGGER)?;
+    log::set_logger(logger)?;
     log::set_max_level(max_level);
-    Ok(SharedConsole { logger: &LOGGER })
+    Ok(SharedConsole { logger })
 }
