@@ -3,6 +3,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod apps;
+mod console;
 pub mod drivers;
 mod exceptions;
 mod logger;
@@ -18,7 +19,8 @@ extern "C" fn main() {
     // SAFETY: We only call `PlatformImpl::console` here, once on boot.
     let mut console = unsafe { PlatformImpl::console() };
     writeln!(console, "DemoOS starting...").unwrap();
-    let mut console = logger::init(console, LevelFilter::Info).unwrap();
+    let mut console = console::init(console);
+    logger::init(console, LevelFilter::Info).unwrap();
 
     shell::main(&mut console);
 

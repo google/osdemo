@@ -3,7 +3,7 @@ mod qemu;
 use embedded_io::{Read, ReadReady, Write, WriteReady};
 pub use qemu::Qemu as PlatformImpl;
 
-pub type Console = <PlatformImpl as Platform>::Console;
+pub type ConsoleImpl = <PlatformImpl as Platform>::Console;
 
 /// Platform-specific code.
 pub trait Platform {
