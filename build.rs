@@ -21,10 +21,19 @@ fn main() {
     #[cfg(not(target_os = "linux"))]
     env::set_var("CROSS_COMPILE", "aarch64-none-elf");
 
-    Build::new()
-        .file("asm/entry.S")
-        .file("asm/exceptions.S")
-        .file("asm/idmap.S")
-        .compile("empty");
+    let platform = env::var("CARGO_CFG_PLATFORM").expect("Missing platform name");
+    match platform.as_ref() {
+        "qemu" => {
+            Build::new()
+                .file("asm/entry.S")
+                .file("asm/exceptions.S")
+                .file("asm/idmap_qemu.S")
+                .compile("empty");
+            println!("cargo:rustc-link-arg=-Tqemu.ld");
+        }
+        _ => {
+            panic!("Unexpected platform name \"{}\"", platform);
+        }
+    }
     println!("cargo:rustc-link-arg=-Timage.ld");
 }
