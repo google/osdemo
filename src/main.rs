@@ -22,8 +22,9 @@ extern "C" fn main() {
     writeln!(console, "DemoOS starting...").unwrap();
     let mut console = console::init(console);
     logger::init(console, LevelFilter::Info).unwrap();
+    let mut rtc = platform.rtc().unwrap();
 
-    shell::main(&mut console);
+    shell::main(&mut console, &mut rtc);
 
     info!("Powering off.");
     PlatformImpl::power_off();

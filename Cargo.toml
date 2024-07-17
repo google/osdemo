@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bitflags = "2.6.0"
+chrono = { version = "0.4.38", default-features = false }
 embedded-io = "0.6.1"
 log = "0.4.22"
 smccc = "0.1.1"
