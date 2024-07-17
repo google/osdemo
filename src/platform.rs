@@ -1,6 +1,8 @@
+#[cfg(feature = "plat-qemu")]
 mod qemu;
 
 use embedded_io::{Read, ReadReady, Write, WriteReady};
+#[cfg(feature = "plat-qemu")]
 pub use qemu::Qemu as PlatformImpl;
 
 pub type ConsoleImpl = <PlatformImpl as Platform>::Console;
