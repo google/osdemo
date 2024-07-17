@@ -29,7 +29,7 @@ fn main() {
                 .file("asm/exceptions.S")
                 .file("asm/idmap_qemu.S")
                 .compile("empty");
-            println!("cargo:rustc-link-arg=-Tqemu.ld");
+            println!("cargo:rustc-link-arg=-Tlinker/qemu.ld");
         }
         "crosvm" => {
             Build::new()
@@ -37,11 +37,11 @@ fn main() {
                 .file("asm/exceptions.S")
                 .file("asm/idmap_crosvm.S")
                 .compile("empty");
-            println!("cargo:rustc-link-arg=-Tcrosvm.ld");
+            println!("cargo:rustc-link-arg=-Tlinker/crosvm.ld");
         }
         _ => {
             panic!("Unexpected platform name \"{}\"", platform);
         }
     }
-    println!("cargo:rustc-link-arg=-Timage.ld");
+    println!("cargo:rustc-link-arg=-Tlinker/image.ld");
 }
