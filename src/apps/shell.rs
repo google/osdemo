@@ -27,7 +27,7 @@ fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<[u8; 128]> {
         let mut c = [0];
         console.read_exact(&mut c).unwrap();
         match c[0] {
-            b'\r' => {
+            b'\r' | b'\n' => {
                 console.write_str("\r\n").unwrap();
                 return line;
             }
