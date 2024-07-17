@@ -8,6 +8,7 @@ pub type ConsoleImpl = <PlatformImpl as Platform>::Console;
 /// Platform-specific code.
 pub trait Platform {
     type Console: Read + ReadReady + Send + Write + WriteReady;
+    type Rtc;
 
     /// Powers off the system.
     fn power_off() -> !;
@@ -25,4 +26,10 @@ pub trait Platform {
     /// This should return `Some` the first time it is called, but may return `None` on subsequent
     /// calls.
     fn console(&mut self) -> Option<Self::Console>;
+
+    /// Returns the real-time clock.
+    ///
+    /// This should return `Some` the first time it is called, but may return `None` on subsequent
+    /// calls.
+    fn rtc(&mut self) -> Option<Self::Rtc>;
 }
