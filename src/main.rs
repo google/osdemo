@@ -16,8 +16,9 @@ use platform::{Platform, PlatformImpl};
 
 #[no_mangle]
 extern "C" fn main() {
-    // SAFETY: We only call `PlatformImpl::console` here, once on boot.
-    let mut console = unsafe { PlatformImpl::console() };
+    // SAFETY: We only call `PlatformImpl::create` here, once on boot.
+    let mut platform = unsafe { PlatformImpl::create() };
+    let mut console = platform.console().unwrap();
     writeln!(console, "DemoOS starting...").unwrap();
     let mut console = console::init(console);
     logger::init(console, LevelFilter::Info).unwrap();

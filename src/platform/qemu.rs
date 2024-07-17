@@ -6,7 +6,9 @@ use smccc::{psci::system_off, Hvc};
 pub const UART_BASE_ADDRESS: *mut u32 = 0x900_0000 as _;
 
 /// The QEMU aarch64 virt platform.
-pub struct Qemu;
+pub struct Qemu {
+    console: Option<Uart>,
+}
 
 impl Platform for Qemu {
     type Console = Uart;
@@ -17,7 +19,13 @@ impl Platform for Qemu {
         loop {}
     }
 
-    unsafe fn console() -> Uart {
-        unsafe { Uart::new(UART_BASE_ADDRESS) }
+    unsafe fn create() -> Self {
+        Self {
+            console: Some(unsafe { Uart::new(UART_BASE_ADDRESS) }),
+        }
+    }
+
+    fn console(&mut self) -> Option<Uart> {
+        self.console.take()
     }
 }

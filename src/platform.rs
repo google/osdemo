@@ -12,14 +12,17 @@ pub trait Platform {
     /// Powers off the system.
     fn power_off() -> !;
 
-    /// Returns the primary console.
-    ///
-    /// This should return `Some` the first time it is called, but may return `None` on subsequent
-    /// calls.
+    /// Creates an instance of the platform.
     ///
     /// # Safety
     ///
     /// This method must only be called once. Calling it multiple times would result in unsound
     /// mutable aliasing.
-    unsafe fn console() -> Self::Console;
+    unsafe fn create() -> Self;
+
+    /// Returns the primary console.
+    ///
+    /// This should return `Some` the first time it is called, but may return `None` on subsequent
+    /// calls.
+    fn console(&mut self) -> Option<Self::Console>;
 }
