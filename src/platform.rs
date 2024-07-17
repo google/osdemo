@@ -1,5 +1,8 @@
+mod crosvm;
 mod qemu;
 
+#[cfg(platform = "crosvm")]
+pub use crosvm::Crosvm as PlatformImpl;
 use embedded_io::{Read, ReadReady, Write, WriteReady};
 #[cfg(platform = "qemu")]
 pub use qemu::Qemu as PlatformImpl;

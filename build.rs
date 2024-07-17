@@ -31,6 +31,14 @@ fn main() {
                 .compile("empty");
             println!("cargo:rustc-link-arg=-Tqemu.ld");
         }
+        "crosvm" => {
+            Build::new()
+                .file("asm/entry.S")
+                .file("asm/exceptions.S")
+                .file("asm/idmap_crosvm.S")
+                .compile("empty");
+            println!("cargo:rustc-link-arg=-Tcrosvm.ld");
+        }
         _ => {
             panic!("Unexpected platform name \"{}\"", platform);
         }

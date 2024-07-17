@@ -13,17 +13,30 @@
 # limitations under the License.
 
 TARGET := --target aarch64-unknown-none
+
+CROSVM_RUSTFLAGS := "--cfg platform=\"crosvm\""
 QEMU_RUSTFLAGS := "--cfg platform=\"qemu\""
 
-.PHONY: all build.qemu clean qemu
+.PHONY: all build.qemu build.crosvm clean crosvm qemu
 
-all: demoos.qemu.bin
+all: demoos.crosvm.bin demoos.qemu.bin
+
+build.crosvm:
+	RUSTFLAGS=$(CROSVM_RUSTFLAGS) cargo build $(TARGET)
 
 build.qemu:
 	RUSTFLAGS=$(QEMU_RUSTFLAGS) cargo build $(TARGET)
 
+demoos.crosvm.bin: build.crosvm
+	RUSTFLAGS=$(CROSVM_RUSTFLAGS) cargo objcopy $(TARGET) -- -O binary $@
+
 demoos.qemu.bin: build.qemu
 	RUSTFLAGS=$(QEMU_RUSTFLAGS) cargo objcopy $(TARGET) -- -O binary $@
+
+crosvm: demoos.crosvm.bin
+	adb shell 'mkdir -p /data/local/tmp/virt_raw'
+	adb push $< /data/local/tmp/virt_raw/demoos
+	adb shell "/apex/com.android.virt/bin/crosvm --log-level=trace --extended-status run --disable-sandbox --bios=/data/local/tmp/virt_raw/demoos"
 
 qemu: demoos.qemu.bin
 	qemu-system-aarch64 -machine virt -cpu max -serial mon:stdio -display none -kernel $< -s
