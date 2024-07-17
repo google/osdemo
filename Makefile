@@ -14,12 +14,14 @@
 
 TARGET := --target aarch64-unknown-none
 
+CROSVM_BIN := target/demoos.crosvm.bin
 CROSVM_RUSTFLAGS := "--cfg platform=\"crosvm\""
+QEMU_BIN := target/demoos.qemu.bin
 QEMU_RUSTFLAGS := "--cfg platform=\"qemu\""
 
 .PHONY: all build.qemu build.crosvm clean crosvm qemu
 
-all: demoos.crosvm.bin demoos.qemu.bin
+all: $(CROSVM_BIN) $(QEMU_BIN)
 
 build.crosvm:
 	RUSTFLAGS=$(CROSVM_RUSTFLAGS) cargo build $(TARGET)
@@ -27,20 +29,20 @@ build.crosvm:
 build.qemu:
 	RUSTFLAGS=$(QEMU_RUSTFLAGS) cargo build $(TARGET)
 
-demoos.crosvm.bin: build.crosvm
+$(CROSVM_BIN): build.crosvm
 	RUSTFLAGS=$(CROSVM_RUSTFLAGS) cargo objcopy $(TARGET) -- -O binary $@
 
-demoos.qemu.bin: build.qemu
+$(QEMU_BIN): build.qemu
 	RUSTFLAGS=$(QEMU_RUSTFLAGS) cargo objcopy $(TARGET) -- -O binary $@
 
-crosvm: demoos.crosvm.bin
+crosvm: $(CROSVM_BIN)
 	adb shell 'mkdir -p /data/local/tmp/virt_raw'
 	adb push $< /data/local/tmp/virt_raw/demoos
 	adb shell "/apex/com.android.virt/bin/crosvm --log-level=trace --extended-status run --disable-sandbox --bios=/data/local/tmp/virt_raw/demoos"
 
-qemu: demoos.qemu.bin
+qemu: $(QEMU_BIN)
 	qemu-system-aarch64 -machine virt -cpu max -serial mon:stdio -display none -kernel $< -s
 
 clean:
 	cargo clean
-	rm -f *.bin
+	rm -f target/*.bin
