@@ -14,7 +14,3 @@ tinyvec = "1.8.0"
 
 [build-dependencies]
 cc = "1.1.5"
-
-[features]
-plat-qemu = []
-default = ["plat-qemu"]

@@ -12,17 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: build qemu
+TARGET := --target aarch64-unknown-none
+QEMU_RUSTFLAGS := "--cfg platform=\"qemu\""
 
-all: demoos.bin
+.PHONY: all build.qemu clean qemu
 
-build:
-	cargo build --target aarch64-unknown-none
+all: demoos.qemu.bin
 
-demoos.bin: build
-	cargo objcopy --target aarch64-unknown-none -- -O binary $@
+build.qemu:
+	RUSTFLAGS=$(QEMU_RUSTFLAGS) cargo build $(TARGET)
 
-qemu: demoos.bin
+demoos.qemu.bin: build.qemu
+	RUSTFLAGS=$(QEMU_RUSTFLAGS) cargo objcopy $(TARGET) -- -O binary $@
+
+qemu: demoos.qemu.bin
 	qemu-system-aarch64 -machine virt -cpu max -serial mon:stdio -display none -kernel $< -s
 
 clean:

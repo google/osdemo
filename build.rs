@@ -25,5 +25,6 @@ fn main() {
         .file("asm/entry.S")
         .file("asm/exceptions.S")
         .file("asm/idmap.S")
-        .compile("empty")
+        .compile("empty");
+    println!("cargo:rustc-link-arg=-Timage.ld");
 }
