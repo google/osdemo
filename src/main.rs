@@ -10,8 +10,8 @@ mod logger;
 mod platform;
 
 use apps::shell;
-use core::{fmt::Write, panic::PanicInfo};
-use log::{error, info, LevelFilter};
+use core::fmt::Write;
+use log::{info, LevelFilter};
 use platform::{Platform, PlatformImpl};
 
 #[no_mangle]
@@ -27,11 +27,5 @@ extern "C" fn main() {
     shell::main(&mut console, &mut rtc);
 
     info!("Powering off.");
-    PlatformImpl::power_off();
-}
-
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    error!("{info}");
     PlatformImpl::power_off();
 }

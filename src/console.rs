@@ -1,5 +1,5 @@
-use crate::platform::ConsoleImpl;
-use core::{convert::Infallible, fmt};
+use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
+use core::{convert::Infallible, fmt, panic::PanicInfo};
 use embedded_io::{ErrorType, Read, Write};
 use spin::{mutex::SpinMutex, Once};
 
@@ -43,4 +43,13 @@ pub fn init(console: ConsoleImpl) -> &'static SharedConsole<ConsoleImpl> {
     });
 
     shared
+}
+
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    if let Some(console) = CONSOLE.get() {
+        // Ignore any errors writing to the console, to avoid panicking recursively.
+        let _ = writeln!(console.console.lock(), "{}", info);
+    }
+    PlatformImpl::power_off();
 }
