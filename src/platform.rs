@@ -1,6 +1,7 @@
 mod crosvm;
 mod qemu;
 
+use arm_gic::gicv3::GicV3;
 #[cfg(platform = "crosvm")]
 pub use crosvm::Crosvm as PlatformImpl;
 use embedded_io::{Read, ReadReady, Write, WriteReady};
@@ -36,4 +37,10 @@ pub trait Platform {
     /// This should return `Some` the first time it is called, but may return `None` on subsequent
     /// calls.
     fn rtc(&mut self) -> Option<Self::Rtc>;
+
+    /// Returns the GIC.
+    ///
+    /// This should return `Some` the first time it is called, but may return `None` on subsequent
+    /// calls.
+    fn gic(&mut self) -> Option<GicV3>;
 }

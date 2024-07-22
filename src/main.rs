@@ -23,6 +23,7 @@ extern "C" fn main() {
     let mut console = console::init(console);
     logger::init(console, LevelFilter::Info).unwrap();
     let mut rtc = platform.rtc().unwrap();
+    let mut _gic = platform.gic().unwrap();
 
     shell::main(&mut console, &mut rtc);
 

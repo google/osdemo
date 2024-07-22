@@ -3,6 +3,15 @@
 version = 3
 
 [[package]]
+name = "arm-gic"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d16805d71f41d1714a51ee34f40633c42980a2afaf8ae237bcba09d6e15494ef"
+dependencies = [
+ "bitflags",
+]
+
+[[package]]
 name = "arm_pl031"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -42,6 +51,7 @@ dependencies = [
 name = "demoos"
 version = "0.1.0"
 dependencies = [
+ "arm-gic",
  "arm_pl031",
  "bitflags",
  "cc",
