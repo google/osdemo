@@ -4,6 +4,7 @@ use arm_pl031::Rtc;
 use log::error;
 use smccc::{psci::system_off, Hvc};
 
+/// Base address of the first PL011 UART.
 const UART_BASE_ADDRESS: *mut u32 = 0x900_0000 as _;
 
 /// Base address of the PL031 RTC.

@@ -4,7 +4,7 @@ use arm_pl031::Rtc;
 use log::error;
 use smccc::{psci::system_off, Hvc};
 
-/// The base address of the first 8250 UART.
+/// Base address of the first 8250 UART.
 const UART_BASE_ADDRESS: *mut u8 = 0x03f8 as _;
 
 /// Base address of the PL030 RTC.
