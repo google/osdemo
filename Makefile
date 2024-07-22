@@ -41,7 +41,7 @@ crosvm: $(CROSVM_BIN)
 	adb shell "/apex/com.android.virt/bin/crosvm --log-level=trace --extended-status run --disable-sandbox --bios=/data/local/tmp/virt_raw/demoos"
 
 qemu: $(QEMU_BIN)
-	qemu-system-aarch64 -machine virt -cpu max -serial mon:stdio -display none -kernel $< -s
+	qemu-system-aarch64 -machine virt,gic-version=3 -cpu max -serial mon:stdio -display none -kernel $< -s
 
 clean:
 	cargo clean

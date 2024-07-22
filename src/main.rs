@@ -23,6 +23,9 @@ extern "C" fn main() {
     let mut console = console::init(parts.console);
     logger::init(console, LevelFilter::Info).unwrap();
 
+    info!("Initialising GIC...");
+    parts.gic.setup();
+
     shell::main(&mut console, &mut parts.rtc);
 
     info!("Powering off.");
