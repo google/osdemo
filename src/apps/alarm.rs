@@ -35,6 +35,8 @@ pub fn irq_finish(rtc: &mut Rtc) {
 
 /// Sets an alarm for 5 seconds in the future.
 pub fn alarm(console: &mut impl Write, rtc: &mut Rtc) {
+    irq_finish(rtc);
+
     let timestamp = rtc.get_time();
     let alarm_time = timestamp + Duration::seconds(4);
     rtc.set_match(alarm_time).unwrap();

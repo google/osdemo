@@ -23,8 +23,6 @@ pub fn main(console: &mut (impl Write + Read), rtc: &mut Rtc, gic: &mut GicV3) {
     irq_enable();
 
     loop {
-        alarm::irq_finish(rtc);
-
         write!(console, "$ ").unwrap();
         let line = read_line(console);
         match line.as_ref() {
