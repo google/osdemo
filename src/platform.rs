@@ -26,21 +26,19 @@ pub trait Platform {
     /// mutable aliasing.
     unsafe fn create() -> Self;
 
-    /// Returns the primary console.
+    /// Returns the drivers provided by the platform.
     ///
     /// This should return `Some` the first time it is called, but may return `None` on subsequent
     /// calls.
-    fn console(&mut self) -> Option<Self::Console>;
+    fn parts(&mut self) -> Option<PlatformParts<Self::Console, Self::Rtc>>;
+}
 
-    /// Returns the real-time clock.
-    ///
-    /// This should return `Some` the first time it is called, but may return `None` on subsequent
-    /// calls.
-    fn rtc(&mut self) -> Option<Self::Rtc>;
-
-    /// Returns the GIC.
-    ///
-    /// This should return `Some` the first time it is called, but may return `None` on subsequent
-    /// calls.
-    fn gic(&mut self) -> Option<GicV3>;
+/// The drivers provided by each platform.
+pub struct PlatformParts<Console, Rtc> {
+    /// The primary console.
+    pub console: Console,
+    /// The GIC.
+    pub gic: GicV3,
+    /// The real-time clock.
+    pub rtc: Rtc,
 }

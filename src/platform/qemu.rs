@@ -1,4 +1,4 @@
-use super::Platform;
+use super::{Platform, PlatformParts};
 use crate::drivers::pl011::Uart;
 use arm_gic::gicv3::GicV3;
 use arm_pl031::Rtc;
@@ -19,9 +19,7 @@ const GICR_BASE_ADDRESS: *mut u64 = 0x80A_0000 as _;
 
 /// The QEMU aarch64 virt platform.
 pub struct Qemu {
-    console: Option<Uart>,
-    rtc: Option<Rtc>,
-    gic: Option<GicV3>,
+    parts: Option<PlatformParts<Uart, Rtc>>,
 }
 
 impl Platform for Qemu {
@@ -36,21 +34,15 @@ impl Platform for Qemu {
 
     unsafe fn create() -> Self {
         Self {
-            console: Some(unsafe { Uart::new(UART_BASE_ADDRESS) }),
-            rtc: Some(unsafe { Rtc::new(PL031_BASE_ADDRESS) }),
-            gic: Some(unsafe { GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS) }),
+            parts: Some(PlatformParts {
+                console: unsafe { Uart::new(UART_BASE_ADDRESS) },
+                rtc: unsafe { Rtc::new(PL031_BASE_ADDRESS) },
+                gic: unsafe { GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS) },
+            }),
         }
     }
 
-    fn console(&mut self) -> Option<Uart> {
-        self.console.take()
-    }
-
-    fn rtc(&mut self) -> Option<Rtc> {
-        self.rtc.take()
-    }
-
-    fn gic(&mut self) -> Option<GicV3> {
-        self.gic.take()
+    fn parts(&mut self) -> Option<PlatformParts<Uart, Rtc>> {
+        self.parts.take()
     }
 }

@@ -18,14 +18,12 @@ use platform::{Platform, PlatformImpl};
 extern "C" fn main() {
     // SAFETY: We only call `PlatformImpl::create` here, once on boot.
     let mut platform = unsafe { PlatformImpl::create() };
-    let mut console = platform.console().unwrap();
-    writeln!(console, "DemoOS starting...").unwrap();
-    let mut console = console::init(console);
+    let mut parts = platform.parts().unwrap();
+    writeln!(parts.console, "DemoOS starting...").unwrap();
+    let mut console = console::init(parts.console);
     logger::init(console, LevelFilter::Info).unwrap();
-    let mut rtc = platform.rtc().unwrap();
-    let mut _gic = platform.gic().unwrap();
 
-    shell::main(&mut console, &mut rtc);
+    shell::main(&mut console, &mut parts.rtc);
 
     info!("Powering off.");
     PlatformImpl::power_off();
