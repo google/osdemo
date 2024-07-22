@@ -8,7 +8,6 @@ use arm_gic::{
     irq_enable,
 };
 use arm_pl031::Rtc;
-use chrono::{TimeZone, Utc};
 use core::fmt::Write;
 use embedded_io::Read;
 use log::info;
@@ -79,8 +78,7 @@ fn irq_handler(intid: IntId) {
 }
 
 fn date(console: &mut (impl Write + Read), rtc: &mut Rtc) {
-    let timestamp = rtc.get_unix_timestamp();
-    let time = Utc.timestamp_opt(timestamp.into(), 0).unwrap();
+    let time = rtc.get_time();
     writeln!(console, "{}", time).unwrap();
 }
 

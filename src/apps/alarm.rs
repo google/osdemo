@@ -1,7 +1,7 @@
 use crate::platform::{Platform, PlatformImpl};
 use arm_gic::gicv3::{GicV3, Trigger};
 use arm_pl031::Rtc;
-use chrono::{TimeZone, Utc};
+use chrono::Duration;
 use core::{
     fmt::Write,
     sync::atomic::{AtomicBool, Ordering},
@@ -35,10 +35,9 @@ pub fn irq_finish(rtc: &mut Rtc) {
 
 /// Sets an alarm for 5 seconds in the future.
 pub fn alarm(console: &mut impl Write, rtc: &mut Rtc) {
-    let timestamp = rtc.get_unix_timestamp();
-    let alarm_timestamp = timestamp + 4;
-    let alarm_time = Utc.timestamp_opt(alarm_timestamp.into(), 0).unwrap();
-    rtc.set_match_timestamp(alarm_timestamp);
+    let timestamp = rtc.get_time();
+    let alarm_time = timestamp + Duration::seconds(4);
+    rtc.set_match(alarm_time).unwrap();
     rtc.enable_interrupt(true);
     writeln!(console, "Set alarm for {}", alarm_time).unwrap();
 }
