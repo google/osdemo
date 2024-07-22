@@ -1,6 +1,6 @@
 use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
 use core::{convert::Infallible, fmt, panic::PanicInfo};
-use embedded_io::{ErrorType, Read, Write};
+use embedded_io::{ErrorType, Read, ReadReady, Write};
 use percore::{exception_free, ExceptionLock};
 use spin::{mutex::SpinMutex, Once};
 
@@ -31,9 +31,21 @@ impl<T: Send + ErrorType<Error = Self::Error> + Write> Write for &SharedConsole<
     }
 }
 
-impl<T: Send + ErrorType<Error = Self::Error> + Read> Read for &SharedConsole<T> {
+impl<T: Send + ErrorType<Error = Self::Error> + Read + ReadReady> Read for &SharedConsole<T> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
-        exception_free(|token| self.console.borrow(token).lock().read(buf))
+        // Wait until the console has some data to read, without holding the lock and keeping
+        // exceptions masked the whole time.
+        loop {
+            if let Some(result) = exception_free(|token| {
+                let mut console = self.console.borrow(token).lock();
+                match console.read_ready()? {
+                    true => Ok::<_, Self::Error>(Some(console.read(buf)?)),
+                    false => Ok(None),
+                }
+            })? {
+                break Ok(result);
+            }
+        }
     }
 }
 
