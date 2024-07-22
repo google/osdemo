@@ -12,9 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use log::error;
-use smccc::psci::system_off;
-use smccc::Hvc;
+use arm_gic::gicv3::{GicV3, IntId};
+use log::{error, trace};
+use percore::{exception_free, ExceptionLock};
+use smccc::{psci::system_off, Hvc};
+use spin::mutex::SpinMutex;
+
+type IrqHandler = &'static (dyn Fn(IntId) + Sync);
+
+static IRQ_HANDLER: ExceptionLock<SpinMutex<Option<IrqHandler>>> =
+    ExceptionLock::new(SpinMutex::new(None));
+
+/// Sets the IRQ handler to the given function.
+pub fn set_irq_handler(handler: Option<IrqHandler>) {
+    exception_free(|token| *IRQ_HANDLER.borrow(token).lock() = handler);
+}
 
 #[no_mangle]
 extern "C" fn sync_exception_current(_elr: u64, _spsr: u64) {
@@ -24,8 +36,17 @@ extern "C" fn sync_exception_current(_elr: u64, _spsr: u64) {
 
 #[no_mangle]
 extern "C" fn irq_current(_elr: u64, _spsr: u64) {
-    error!("irq_current");
-    system_off::<Hvc>().unwrap();
+    trace!("irq_current");
+    let intid = GicV3::get_and_acknowledge_interrupt().expect("No pending interrupt");
+    trace!("IRQ: {:?}", intid);
+    exception_free(|token| {
+        if let Some(handler) = IRQ_HANDLER.borrow(token).lock().as_ref() {
+            handler(intid);
+        } else {
+            panic!("Unexpected IRQ {:?} with no handler", intid);
+        }
+    });
+    GicV3::end_interrupt(intid);
 }
 
 #[no_mangle]
