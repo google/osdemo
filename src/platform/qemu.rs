@@ -1,5 +1,6 @@
 use super::Platform;
-use crate::drivers::{pl011::Uart, pl031::Rtc};
+use crate::drivers::pl011::Uart;
+use arm_pl031::Rtc;
 use log::error;
 use smccc::{psci::system_off, Hvc};
 

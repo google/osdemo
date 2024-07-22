@@ -1,4 +1,4 @@
-use crate::drivers::pl031::Rtc;
+use arm_pl031::Rtc;
 use chrono::{TimeZone, Utc};
 use core::fmt::Write;
 use embedded_io::Read;
@@ -47,7 +47,7 @@ fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<[u8; 128]> {
 }
 
 fn date(console: &mut (impl Write + Read), rtc: &mut Rtc) {
-    let timestamp = rtc.read();
+    let timestamp = rtc.get_unix_timestamp();
     let time = Utc.timestamp_opt(timestamp.into(), 0).unwrap();
     writeln!(console, "{}", time).unwrap();
 }
