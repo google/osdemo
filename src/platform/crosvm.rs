@@ -1,6 +1,6 @@
 use super::{Platform, PlatformParts};
 use crate::drivers::uart8250::Uart;
-use arm_gic::gicv3::GicV3;
+use arm_gic::gicv3::{GicV3, IntId};
 use arm_pl031::Rtc;
 use log::error;
 use smccc::{psci::system_off, Hvc};
@@ -24,6 +24,8 @@ pub struct Crosvm {
 impl Platform for Crosvm {
     type Console = Uart;
     type Rtc = Rtc;
+
+    const RTC_IRQ: IntId = IntId::spi(2);
 
     fn power_off() -> ! {
         system_off::<Hvc>().unwrap();

@@ -1,7 +1,7 @@
 mod crosvm;
 mod qemu;
 
-use arm_gic::gicv3::GicV3;
+use arm_gic::gicv3::{GicV3, IntId};
 #[cfg(platform = "crosvm")]
 pub use crosvm::Crosvm as PlatformImpl;
 use embedded_io::{Read, ReadReady, Write, WriteReady};
@@ -14,6 +14,9 @@ pub type ConsoleImpl = <PlatformImpl as Platform>::Console;
 pub trait Platform {
     type Console: Read + ReadReady + Send + Write + WriteReady;
     type Rtc;
+
+    /// The IRQ used by the RTC.
+    const RTC_IRQ: IntId;
 
     /// Powers off the system.
     fn power_off() -> !;
