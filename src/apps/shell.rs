@@ -40,6 +40,7 @@ pub fn main(console: &mut (impl Write + Read), rtc: &mut Rtc, gic: &mut GicV3) {
         write!(console, "$ ").unwrap();
         let line = read_line(console);
         match line.as_ref() {
+            b"" => {}
             b"alarm" => alarm(console, rtc),
             b"date" => date(console, rtc),
             b"exit" | [EOF] => break,
