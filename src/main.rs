@@ -26,7 +26,7 @@ extern "C" fn main() {
     info!("Initialising GIC...");
     parts.gic.setup();
 
-    shell::main(&mut console, &mut parts.rtc);
+    shell::main(&mut console, &mut parts.rtc, &mut parts.gic);
 
     info!("Powering off.");
     PlatformImpl::power_off();

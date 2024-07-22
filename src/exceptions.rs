@@ -46,7 +46,6 @@ extern "C" fn irq_current(_elr: u64, _spsr: u64) {
             panic!("Unexpected IRQ {:?} with no handler", intid);
         }
     });
-    GicV3::end_interrupt(intid);
 }
 
 #[no_mangle]
