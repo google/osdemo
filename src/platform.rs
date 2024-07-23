@@ -1,6 +1,8 @@
 mod crosvm;
 mod qemu;
 
+use crate::pagetable::IdMap;
+use aarch64_paging::MapError;
 use arm_gic::gicv3::{GicV3, IntId};
 #[cfg(platform = "crosvm")]
 pub use crosvm::Crosvm as PlatformImpl;
@@ -34,6 +36,9 @@ pub trait Platform {
     /// This should return `Some` the first time it is called, but may return `None` on subsequent
     /// calls.
     fn parts(&mut self) -> Option<PlatformParts<Self::Console, Self::Rtc>>;
+
+    /// Maps the pages needed for the platform memory and devices.
+    fn map_pages(&self, idmap: &mut IdMap) -> Result<(), MapError>;
 }
 
 /// The drivers provided by each platform.
