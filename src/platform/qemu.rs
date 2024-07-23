@@ -35,6 +35,7 @@ impl Platform for Qemu {
     fn power_off() -> ! {
         system_off::<Hvc>().unwrap();
         error!("PSCI_SYSTEM_OFF returned unexpectedly");
+        #[allow(clippy::empty_loop)]
         loop {}
     }
 
