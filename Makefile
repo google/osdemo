@@ -19,9 +19,12 @@ CROSVM_RUSTFLAGS := "--cfg platform=\"crosvm\""
 QEMU_BIN := target/demoos.qemu.bin
 QEMU_RUSTFLAGS := "--cfg platform=\"qemu\""
 
-.PHONY: all build.qemu build.crosvm clean crosvm qemu
+.PHONY: all build.qemu build.crosvm clean clippy crosvm qemu
 
 all: $(CROSVM_BIN) $(QEMU_BIN)
+
+clippy:
+	RUSTFLAGS=$(QEMU_RUSTFLAGS) cargo clippy $(TARGET)
 
 build.crosvm:
 	RUSTFLAGS=$(CROSVM_RUSTFLAGS) cargo build $(TARGET)
