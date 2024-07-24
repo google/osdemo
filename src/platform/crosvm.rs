@@ -40,10 +40,14 @@ impl Platform for Crosvm {
 
     unsafe fn create() -> Self {
         Self {
-            parts: Some(PlatformParts {
-                console: unsafe { Uart::new(UART_BASE_ADDRESS) },
-                rtc: unsafe { Rtc::new(PL030_BASE_ADDRESS) },
-                gic: unsafe { GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS) },
+            // SAFETY: The various base addresses are valid and mapped, and `create` is only called
+            // once so there are no aliases.
+            parts: Some(unsafe {
+                PlatformParts {
+                    console: Uart::new(UART_BASE_ADDRESS),
+                    rtc: Rtc::new(PL030_BASE_ADDRESS),
+                    gic: GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS),
+                }
             }),
         }
     }

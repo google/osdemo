@@ -88,6 +88,9 @@ impl IdMap {
     }
 
     pub unsafe fn activate(&mut self) {
+        // SAFETY: The caller has ensured that the page table doesn't unmap any memory and is held
+        // for long enough. Mappings are unique because it uses identity mapping, so it won't
+        // introduce any aliases.
         unsafe {
             self.mapping.activate();
         }

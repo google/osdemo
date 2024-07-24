@@ -1,5 +1,6 @@
 #![no_main]
 #![no_std]
+#![deny(clippy::undocumented_unsafe_blocks)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod apps;
@@ -44,6 +45,8 @@ extern "C" fn main() {
     info!("Mapping platform pages...");
     platform.map_pages(&mut idmap).unwrap();
     info!("Activating page table...");
+    // SAFETY: The page table maps all the memory we use, and we keep it until the end of the
+    // program.
     unsafe {
         idmap.activate();
     }
