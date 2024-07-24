@@ -64,11 +64,13 @@ impl Translation for IdTranslation {
     }
 }
 
+/// Manages a page table using identity mapping.
 pub struct IdMap {
     mapping: Mapping<IdTranslation>,
 }
 
 impl IdMap {
+    /// Creates a new `IdMap` using the given page allocator.
     pub fn new(page_allocator: Heap<32>) -> Self {
         Self {
             mapping: Mapping::new(
@@ -81,12 +83,22 @@ impl IdMap {
         }
     }
 
+    /// Identity-maps the given range of pages with the given flags.
     pub fn map_range(&mut self, range: &MemoryRegion, flags: Attributes) -> Result<(), MapError> {
         let pa = IdTranslation::virtual_to_physical(range.start());
         self.mapping
             .map_range(range, pa, flags, Constraints::empty())
     }
 
+    /// Activates the page table by setting `TTBR0_EL1` to point to it.
+    ///
+    /// Panics if the `IdMap` has already been activated.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that the page table doesn't unmap any memory which the program is
+    /// using. The page table must not be dropped as long as its mappings are required, as it will
+    /// automatically be deactivated when it is dropped.
     pub unsafe fn activate(&mut self) {
         // SAFETY: The caller has ensured that the page table doesn't unmap any memory and is held
         // for long enough. Mappings are unique because it uses identity mapping, so it won't
