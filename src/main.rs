@@ -19,7 +19,7 @@ use core::fmt::Write;
 use flat_device_tree::{node::FdtNode, standard_nodes, Fdt};
 use log::{debug, info, LevelFilter};
 use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
-use pci::{init_all_pci, PCIE_COMPATIBLE, PCI_COMPATIBLE};
+use pci::{all_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
 
 const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
@@ -65,7 +65,8 @@ extern "C" fn main(fdt_address: *const u8) {
         idmap.activate();
     }
 
-    let mut pci_roots = init_all_pci(&fdt);
+    // SAFETY: We only call this once, and `map_fdt_regions` mapped the MMIO regions.
+    let mut pci_roots = unsafe { all_pci_roots(&fdt) };
 
     shell::main(&mut console, &mut parts.rtc, &mut parts.gic, &mut pci_roots);
 
