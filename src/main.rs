@@ -16,10 +16,10 @@ use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use apps::shell;
 use buddy_system_allocator::Heap;
 use core::fmt::Write;
-use flat_device_tree::{standard_nodes, Fdt};
+use flat_device_tree::{node::FdtNode, standard_nodes, Fdt};
 use log::{debug, info, LevelFilter};
-use pagetable::{IdMap, MEMORY_ATTRIBUTES};
-use pci::init_first_pci;
+use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
+use pci::{init_first_pci, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
 
 const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
@@ -56,10 +56,28 @@ extern "C" fn main(fdt_address: *const u8) {
         page_allocator.init(PAGE_HEAP.as_mut_ptr() as usize, PAGE_HEAP.len());
     }
     let mut idmap = IdMap::new(page_allocator);
+    map_fdt_regions(&fdt, &mut idmap);
 
+    info!("Activating page table...");
+    // SAFETY: The page table maps all the memory we use, and we keep it until the end of the
+    // program.
+    unsafe {
+        idmap.activate();
+    }
+
+    let mut pci_root = init_first_pci(&fdt);
+
+    shell::main(&mut console, &mut parts.rtc, &mut parts.gic, &mut pci_root);
+
+    info!("Powering off.");
+    PlatformImpl::power_off();
+}
+
+/// Maps memory and device regions from the FDT.
+fn map_fdt_regions(fdt: &Fdt, idmap: &mut IdMap) {
+    // Map memory.
     // TODO: Support multiple memory nodes, as allowed by the specification.
-    let memory = fdt.memory().unwrap();
-    for fdt_region in memory.regions() {
+    for fdt_region in fdt.memory().unwrap().regions() {
         let region = fdt_to_pagetable_region(&fdt_region);
         info!(
             "Mapping memory region {:?} from FDT ({} MiB)...",
@@ -69,21 +87,43 @@ extern "C" fn main(fdt_address: *const u8) {
         idmap.map_range(&region, MEMORY_ATTRIBUTES).unwrap();
     }
 
-    info!("Mapping platform pages...");
-    platform.map_pages(&mut idmap).unwrap();
-    info!("Activating page table...");
-    // SAFETY: The page table maps all the memory we use, and we keep it until the end of the
-    // program.
-    unsafe {
-        idmap.activate();
+    // Map MMIO regions for devices.
+    for node in fdt.all_nodes() {
+        if is_compatible(
+            &node,
+            &[
+                PCI_COMPATIBLE,
+                PCIE_COMPATIBLE,
+                "arm,gic-v3",
+                "arm,gic-v3-its",
+                "arm,pl011",
+                "arm,pl031",
+                "arm,pl061",
+                "arm,primecell",
+                "ns16550a",
+                "virtio,mmio",
+            ],
+        ) {
+            for fdt_region in node.reg() {
+                let region = fdt_to_pagetable_region(&fdt_region);
+                info!(
+                    "Mappping {} for {}, compatible={}",
+                    region,
+                    node.name,
+                    node.compatible().unwrap().first().unwrap()
+                );
+                idmap.map_range(&region, DEVICE_ATTRIBUTES).unwrap();
+            }
+        } else if let Some(compatible) = node.compatible() {
+            info!(
+                "Ignoring {}, compatible={}",
+                node.name,
+                compatible.first().unwrap()
+            );
+        } else {
+            info!("Ignoring {}", node.name);
+        }
     }
-
-    let mut pci_root = init_first_pci(&fdt, &mut idmap);
-
-    shell::main(&mut console, &mut parts.rtc, &mut parts.gic, &mut pci_root);
-
-    info!("Powering off.");
-    PlatformImpl::power_off();
 }
 
 fn fdt_to_pagetable_region(region: &standard_nodes::MemoryRegion) -> MemoryRegion {
@@ -91,4 +131,12 @@ fn fdt_to_pagetable_region(region: &standard_nodes::MemoryRegion) -> MemoryRegio
         region.starting_address as _,
         region.starting_address as usize + region.size.unwrap(),
     )
+}
+
+fn is_compatible(node: &FdtNode, with: &[&str]) -> bool {
+    if let Some(compatible) = node.compatible() {
+        compatible.all().any(|c| with.contains(&c))
+    } else {
+        false
+    }
 }

@@ -1,9 +1,5 @@
 use super::{Platform, PlatformParts};
-use crate::{
-    drivers::pl011::Uart,
-    pagetable::{IdMap, DEVICE_ATTRIBUTES},
-};
-use aarch64_paging::{paging::MemoryRegion, MapError};
+use crate::drivers::pl011::Uart;
 use arm_gic::gicv3::{GicV3, IntId};
 use arm_pl031::Rtc;
 use log::error;
@@ -55,13 +51,5 @@ impl Platform for Qemu {
 
     fn parts(&mut self) -> Option<PlatformParts<Uart, Rtc>> {
         self.parts.take()
-    }
-
-    fn map_pages(&self, idmap: &mut IdMap) -> Result<(), MapError> {
-        idmap.map_range(
-            &MemoryRegion::new(0x0000_0000, 0x4000_0000),
-            DEVICE_ATTRIBUTES,
-        )?;
-        Ok(())
     }
 }
