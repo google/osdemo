@@ -41,6 +41,9 @@ extern "C" fn main(fdt_address: *const u8) {
     let fdt = unsafe { Fdt::from_ptr(fdt_address).unwrap() };
     info!("FDT size: {} bytes", fdt.total_size());
     debug!("FDT: {:?}", fdt);
+    for reserved in fdt.memory_reservations() {
+        info!("Reserved memory: {:?}", reserved);
+    }
 
     info!("Initialising GIC...");
     parts.gic.setup();
