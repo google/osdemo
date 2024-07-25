@@ -80,7 +80,7 @@ extern "C" fn main(fdt_address: *const u8) {
 
     let mut pci_root = init_first_pci(&fdt, &mut idmap);
 
-    shell::main(&mut console, &mut parts.rtc, &mut parts.gic);
+    shell::main(&mut console, &mut parts.rtc, &mut parts.gic, &mut pci_root);
 
     info!("Powering off.");
     PlatformImpl::power_off();
