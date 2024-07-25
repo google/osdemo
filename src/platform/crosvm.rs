@@ -1,7 +1,7 @@
 use super::{Platform, PlatformParts};
 use crate::{
     drivers::uart8250::Uart,
-    pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
+    pagetable::{IdMap, DEVICE_ATTRIBUTES},
 };
 use aarch64_paging::{paging::MemoryRegion, MapError};
 use arm_gic::gicv3::{GicV3, IntId};
@@ -60,10 +60,6 @@ impl Platform for Crosvm {
         idmap.map_range(
             &MemoryRegion::new(0x0000_0000, 0x8000_0000),
             DEVICE_ATTRIBUTES,
-        )?;
-        idmap.map_range(
-            &MemoryRegion::new(0x8000_0000, 0x1_0000_0000),
-            MEMORY_ATTRIBUTES,
         )?;
         Ok(())
     }

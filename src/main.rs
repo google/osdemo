@@ -11,13 +11,13 @@ mod logger;
 mod pagetable;
 mod platform;
 
-use aarch64_paging::paging::PAGE_SIZE;
+use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use apps::shell;
 use buddy_system_allocator::Heap;
 use core::fmt::Write;
 use flat_device_tree::Fdt;
 use log::{debug, info, LevelFilter};
-use pagetable::IdMap;
+use pagetable::{IdMap, MEMORY_ATTRIBUTES};
 use platform::{Platform, PlatformImpl};
 
 const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
@@ -51,6 +51,22 @@ extern "C" fn main(fdt_address: *const u8) {
         page_allocator.init(PAGE_HEAP.as_mut_ptr() as usize, PAGE_HEAP.len());
     }
     let mut idmap = IdMap::new(page_allocator);
+
+    // TODO: Support multiple memory nodes, as allowed by the specification.
+    let memory = fdt.memory().unwrap();
+    for fdt_region in memory.regions() {
+        let region = MemoryRegion::new(
+            fdt_region.starting_address as _,
+            fdt_region.starting_address as usize + fdt_region.size.unwrap(),
+        );
+        info!(
+            "Mapping memory region {:?} from FDT ({} MiB)...",
+            region,
+            fdt_region.size.unwrap() / (1024 * 1024)
+        );
+        idmap.map_range(&region, MEMORY_ATTRIBUTES).unwrap();
+    }
+
     info!("Mapping platform pages...");
     platform.map_pages(&mut idmap).unwrap();
     info!("Activating page table...");
