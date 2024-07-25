@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use arm_gic::gicv3::{GicV3, IntId};
+use core::arch::asm;
 use log::trace;
 use percore::{exception_free, ExceptionLock};
 use spin::mutex::SpinMutex;
@@ -28,8 +29,13 @@ pub fn set_irq_handler(handler: Option<IrqHandler>) {
 }
 
 #[no_mangle]
-extern "C" fn sync_exception_current(_elr: u64, _spsr: u64) {
-    panic!("sync_exception_current");
+extern "C" fn sync_exception_current(elr: u64, _spsr: u64) {
+    panic!(
+        "Unexpected sync_exception_current, esr={:#x}, far={:#x}, elr={:#x}",
+        esr(),
+        far(),
+        elr
+    );
 }
 
 #[no_mangle]
@@ -74,4 +80,22 @@ extern "C" fn fiq_lower(_elr: u64, _spsr: u64) {
 #[no_mangle]
 extern "C" fn serr_lower(_elr: u64, _spsr: u64) {
     panic!("Unexpected serr_lower");
+}
+
+fn esr() -> u64 {
+    let mut esr: u64;
+    // SAFETY: This only reads a system register.
+    unsafe {
+        asm!("mrs {esr}, esr_el1", esr = out(reg) esr);
+    }
+    esr
+}
+
+fn far() -> u64 {
+    let mut far: u64;
+    // SAFETY: This only reads a system register.
+    unsafe {
+        asm!("mrs {far}, far_el1", far = out(reg) far);
+    }
+    far
 }
