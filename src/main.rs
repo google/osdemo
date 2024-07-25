@@ -25,7 +25,7 @@ use platform::{Platform, PlatformImpl};
 const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
 static mut PAGE_HEAP: [u8; PAGE_HEAP_SIZE] = [0; PAGE_HEAP_SIZE];
 
-const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
+const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
 #[no_mangle]
 extern "C" fn main(fdt_address: *const u8) {
