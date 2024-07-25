@@ -15,7 +15,8 @@ use aarch64_paging::paging::PAGE_SIZE;
 use apps::shell;
 use buddy_system_allocator::Heap;
 use core::fmt::Write;
-use log::{info, LevelFilter};
+use flat_device_tree::Fdt;
+use log::{debug, info, LevelFilter};
 use pagetable::IdMap;
 use platform::{Platform, PlatformImpl};
 
@@ -23,13 +24,19 @@ const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
 static mut PAGE_HEAP: [u8; PAGE_HEAP_SIZE] = [0; PAGE_HEAP_SIZE];
 
 #[no_mangle]
-extern "C" fn main() {
+extern "C" fn main(fdt_address: *const u8) {
     // SAFETY: We only call `PlatformImpl::create` here, once on boot.
     let mut platform = unsafe { PlatformImpl::create() };
     let mut parts = platform.parts().unwrap();
     writeln!(parts.console, "DemoOS starting...").unwrap();
     let mut console = console::init(parts.console);
     logger::init(console, LevelFilter::Info).unwrap();
+    info!("FDT address: {:?}", fdt_address);
+    // SAFETY: We trust that the FDT pointer we were given is valid, and this is the only time we
+    // use it.
+    let fdt = unsafe { Fdt::from_ptr(fdt_address).unwrap() };
+    info!("FDT size: {} bytes", fdt.total_size());
+    debug!("FDT: {:?}", fdt);
 
     info!("Initialising GIC...");
     parts.gic.setup();

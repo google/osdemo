@@ -74,6 +74,7 @@ dependencies = [
  "cc",
  "chrono",
  "embedded-io",
+ "flat_device_tree",
  "log",
  "percore",
  "smccc",
@@ -86,6 +87,12 @@ name = "embedded-io"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
+
+[[package]]
+name = "flat_device_tree"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d29ba76ecf314f211601c5641d6fc4393d8f56a3b7764b3c8544639aad965a9"
 
 [[package]]
 name = "log"

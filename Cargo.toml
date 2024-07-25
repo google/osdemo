@@ -11,6 +11,7 @@ bitflags = "2.6.0"
 buddy_system_allocator = { version = "0.10.0", default-features = false }
 chrono = { version = "0.4.38", default-features = false }
 embedded-io = "0.6.1"
+flat_device_tree = { version = "3.1.1", features = ["pretty-printing"] }
 log = "0.4.22"
 percore = "0.1.0"
 smccc = "0.1.1"
