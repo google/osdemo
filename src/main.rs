@@ -23,6 +23,8 @@ use platform::{Platform, PlatformImpl};
 const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
 static mut PAGE_HEAP: [u8; PAGE_HEAP_SIZE] = [0; PAGE_HEAP_SIZE];
 
+const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
+
 #[no_mangle]
 extern "C" fn main(fdt_address: *const u8) {
     // SAFETY: We only call `PlatformImpl::create` here, once on boot.
@@ -30,7 +32,7 @@ extern "C" fn main(fdt_address: *const u8) {
     let mut parts = platform.parts().unwrap();
     writeln!(parts.console, "DemoOS starting...").unwrap();
     let mut console = console::init(parts.console);
-    logger::init(console, LevelFilter::Info).unwrap();
+    logger::init(console, LOG_LEVEL).unwrap();
     info!("FDT address: {:?}", fdt_address);
     // SAFETY: We trust that the FDT pointer we were given is valid, and this is the only time we
     // use it.
