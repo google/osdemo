@@ -9,7 +9,7 @@ pub mod drivers;
 mod exceptions;
 mod logger;
 mod pagetable;
-mod pci;
+pub mod pci;
 mod platform;
 
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
@@ -19,7 +19,7 @@ use core::fmt::Write;
 use flat_device_tree::{node::FdtNode, standard_nodes, Fdt};
 use log::{debug, info, LevelFilter};
 use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
-use pci::{init_first_pci, PCIE_COMPATIBLE, PCI_COMPATIBLE};
+use pci::{init_all_pci, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
 
 const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
@@ -65,9 +65,9 @@ extern "C" fn main(fdt_address: *const u8) {
         idmap.activate();
     }
 
-    let mut pci_root = init_first_pci(&fdt);
+    let mut pci_roots = init_all_pci(&fdt);
 
-    shell::main(&mut console, &mut parts.rtc, &mut parts.gic, &mut pci_root);
+    shell::main(&mut console, &mut parts.rtc, &mut parts.gic, &mut pci_roots);
 
     info!("Powering off.");
     PlatformImpl::power_off();

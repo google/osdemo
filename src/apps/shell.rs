@@ -1,6 +1,7 @@
 use crate::{
     apps::alarm,
     exceptions::set_irq_handler,
+    pci::PciRoots,
     platform::{Platform, PlatformImpl},
 };
 use arm_gic::{
@@ -12,7 +13,7 @@ use arrayvec::ArrayVec;
 use core::fmt::Write;
 use embedded_io::Read;
 use log::info;
-use virtio_drivers::transport::pci::{bus::PciRoot, virtio_device_type};
+use virtio_drivers::transport::pci::virtio_device_type;
 
 const EOF: u8 = 0x04;
 
@@ -20,7 +21,7 @@ pub fn main(
     console: &mut (impl Write + Read),
     rtc: &mut Rtc,
     gic: &mut GicV3,
-    pci_root: &mut Option<PciRoot>,
+    pci_roots: &mut PciRoots,
 ) {
     info!("Configuring IRQs...");
     GicV3::set_priority_mask(0xff);
@@ -37,7 +38,7 @@ pub fn main(
             b"date" => date(console, rtc),
             b"exit" | [EOF] => break,
             b"help" => help(console),
-            b"lspci" => lspci(console, pci_root),
+            b"lspci" => lspci(console, pci_roots),
             _ => {
                 writeln!(console, "Unrecognised command.").unwrap();
             }
@@ -104,8 +105,9 @@ fn help(console: &mut (impl Write + Read)) {
     writeln!(console, "  lspci - Lists devices on the PCI bus").unwrap();
 }
 
-fn lspci(console: &mut impl Write, pci_root: &mut Option<PciRoot>) {
-    if let Some(pci_root) = pci_root {
+fn lspci(console: &mut impl Write, pci_roots: &mut PciRoots) {
+    writeln!(console, "{} PCI roots", pci_roots.len()).unwrap();
+    for pci_root in pci_roots {
         for (device_function, info) in pci_root.enumerate_bus(0) {
             let (status, command) = pci_root.get_status_command(device_function);
             writeln!(
@@ -118,7 +120,5 @@ fn lspci(console: &mut impl Write, pci_root: &mut Option<PciRoot>) {
                 writeln!(console, "  VirtIO {:?}", virtio_type).unwrap();
             }
         }
-    } else {
-        writeln!(console, "No PCI bus.").unwrap();
     }
 }

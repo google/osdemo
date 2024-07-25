@@ -1,21 +1,25 @@
+use arrayvec::ArrayVec;
 use flat_device_tree::{node::FdtNode, Fdt};
 use log::info;
 use virtio_drivers::transport::pci::bus::{Cam, PciRoot};
 
 pub const PCI_COMPATIBLE: &str = "pci-host-cam-generic";
 pub const PCIE_COMPATIBLE: &str = "pci-host-ecam-generic";
+const MAX_PCI_ROOTS: usize = 2;
 
-/// Finds and initialises the first PCI or PCIE root, if any.
-pub fn init_first_pci(fdt: &Fdt) -> Option<PciRoot> {
+pub type PciRoots = ArrayVec<PciRoot, MAX_PCI_ROOTS>;
+
+/// Finds and initialises all PCI and PCIE roots.
+pub fn init_all_pci(fdt: &Fdt) -> PciRoots {
+    let mut pci_roots = ArrayVec::new();
     if let Some(pci_node) = fdt.find_compatible(&[PCI_COMPATIBLE]) {
         info!("PCI node: {}", pci_node.name);
-        Some(init_pci(pci_node, Cam::MmioCam))
+        pci_roots.push(init_pci(pci_node, Cam::MmioCam))
     } else if let Some(pcie_node) = fdt.find_compatible(&[PCIE_COMPATIBLE]) {
         info!("PCIE node: {}", pcie_node.name);
-        Some(init_pci(pcie_node, Cam::Ecam))
-    } else {
-        None
+        pci_roots.push(init_pci(pcie_node, Cam::Ecam))
     }
+    pci_roots
 }
 
 /// Maps the MMIO region for the PCI root represented by the given FDT node, and initialises and
