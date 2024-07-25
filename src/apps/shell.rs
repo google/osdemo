@@ -112,12 +112,21 @@ fn lspci(console: &mut impl Write, pci_roots: &mut PciRoots) {
             let (status, command) = pci_root.get_status_command(device_function);
             writeln!(
                 console,
-                "Found {} at {}, status {:?} command {:?}",
+                "{} at {}, status {:?} command {:?}",
                 info, device_function, status, command
             )
             .unwrap();
             if let Some(virtio_type) = virtio_device_type(&info) {
                 writeln!(console, "  VirtIO {:?}", virtio_type).unwrap();
+            }
+            let mut bar_index = 0;
+            while bar_index < 6 {
+                let info = pci_root.bar_info(device_function, bar_index).unwrap();
+                writeln!(console, "  BAR {}: {}", bar_index, info).unwrap();
+                bar_index += 1;
+                if info.takes_two_entries() {
+                    bar_index += 1;
+                }
             }
         }
     }
