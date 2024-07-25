@@ -30,6 +30,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arrayvec"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96d30a06541fbafbc7f82ed10c06164cfbd2c401138f6addd8404629c4b16711"
+
+[[package]]
 name = "autocfg"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -75,6 +81,7 @@ dependencies = [
  "aarch64-paging",
  "arm-gic",
  "arm_pl031",
+ "arrayvec",
  "bitflags",
  "buddy_system_allocator",
  "cc",
@@ -85,7 +92,6 @@ dependencies = [
  "percore",
  "smccc",
  "spin",
- "tinyvec",
  "virtio-drivers",
 ]
 
@@ -162,12 +168,6 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
-
-[[package]]
-name = "tinyvec"
-version = "1.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "445e881f4f6d382d5f27c034e25eb92edd7c784ceab92a0937db7f2e9471b938"
 
 [[package]]
 name = "unicode-ident"

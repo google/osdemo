@@ -5,8 +5,9 @@ edition = "2021"
 
 [dependencies]
 aarch64-paging = { version = "0.7.0", default-features = false }
-arm-gic = "0.1.0"
 arm_pl031 = "0.2.1"
+arm-gic = "0.1.0"
+arrayvec = { version = "0.7.4", default-features = false }
 bitflags = "2.6.0"
 buddy_system_allocator = { version = "0.10.0", default-features = false }
 chrono = { version = "0.4.38", default-features = false }
@@ -19,7 +20,6 @@ spin = { version = "0.9.8", features = [
   "spin_mutex",
   "once",
 ], default-features = false }
-tinyvec = "1.8.0"
 virtio-drivers = { version = "0.7.4", default-features = false }
 
 [build-dependencies]

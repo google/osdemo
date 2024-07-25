@@ -8,10 +8,10 @@ use arm_gic::{
     irq_enable,
 };
 use arm_pl031::Rtc;
+use arrayvec::ArrayVec;
 use core::fmt::Write;
 use embedded_io::Read;
 use log::info;
-use tinyvec::{array_vec, ArrayVec};
 use virtio_drivers::transport::pci::{bus::PciRoot, virtio_device_type};
 
 const EOF: u8 = 0x04;
@@ -46,8 +46,8 @@ pub fn main(
     set_irq_handler(None);
 }
 
-fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<[u8; 128]> {
-    let mut line: ArrayVec<[u8; 128]> = array_vec![];
+fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<u8, 128> {
+    let mut line: ArrayVec<u8, 128> = ArrayVec::new();
     loop {
         let mut c = [0];
         console.read_exact(&mut c).unwrap();
