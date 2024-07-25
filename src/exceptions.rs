@@ -13,9 +13,8 @@
 // limitations under the License.
 
 use arm_gic::gicv3::{GicV3, IntId};
-use log::{error, trace};
+use log::trace;
 use percore::{exception_free, ExceptionLock};
-use smccc::{psci::system_off, Hvc};
 use spin::mutex::SpinMutex;
 
 type IrqHandler = &'static (dyn Fn(IntId) + Sync);
@@ -30,8 +29,7 @@ pub fn set_irq_handler(handler: Option<IrqHandler>) {
 
 #[no_mangle]
 extern "C" fn sync_exception_current(_elr: u64, _spsr: u64) {
-    error!("sync_exception_current");
-    system_off::<Hvc>().unwrap();
+    panic!("sync_exception_current");
 }
 
 #[no_mangle]
@@ -50,36 +48,30 @@ extern "C" fn irq_current(_elr: u64, _spsr: u64) {
 
 #[no_mangle]
 extern "C" fn fiq_current(_elr: u64, _spsr: u64) {
-    error!("fiq_current");
-    system_off::<Hvc>().unwrap();
+    panic!("Unexpected fiq_current");
 }
 
 #[no_mangle]
 extern "C" fn serr_current(_elr: u64, _spsr: u64) {
-    error!("serr_current");
-    system_off::<Hvc>().unwrap();
+    panic!("Unexpected serr_current");
 }
 
 #[no_mangle]
 extern "C" fn sync_lower(_elr: u64, _spsr: u64) {
-    error!("sync_lower");
-    system_off::<Hvc>().unwrap();
+    panic!("Unexpected sync_lower");
 }
 
 #[no_mangle]
 extern "C" fn irq_lower(_elr: u64, _spsr: u64) {
-    error!("irq_lower");
-    system_off::<Hvc>().unwrap();
+    panic!("Unexpected irq_lower");
 }
 
 #[no_mangle]
 extern "C" fn fiq_lower(_elr: u64, _spsr: u64) {
-    error!("fiq_lower");
-    system_off::<Hvc>().unwrap();
+    panic!("Unexpected fiq_lower");
 }
 
 #[no_mangle]
 extern "C" fn serr_lower(_elr: u64, _spsr: u64) {
-    error!("serr_lower");
-    system_off::<Hvc>().unwrap();
+    panic!("Unexpected serr_lower");
 }
