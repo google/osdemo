@@ -20,6 +20,7 @@ spin = { version = "0.9.8", features = [
   "once",
 ], default-features = false }
 tinyvec = "1.8.0"
+virtio-drivers = { version = "0.7.4", default-features = false }
 
 [build-dependencies]
 cc = "1.1.5"

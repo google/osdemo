@@ -9,15 +9,17 @@ pub mod drivers;
 mod exceptions;
 mod logger;
 mod pagetable;
+mod pci;
 mod platform;
 
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use apps::shell;
 use buddy_system_allocator::Heap;
 use core::fmt::Write;
-use flat_device_tree::Fdt;
+use flat_device_tree::{standard_nodes, Fdt};
 use log::{debug, info, LevelFilter};
 use pagetable::{IdMap, MEMORY_ATTRIBUTES};
+use pci::init_first_pci;
 use platform::{Platform, PlatformImpl};
 
 const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
@@ -55,10 +57,7 @@ extern "C" fn main(fdt_address: *const u8) {
     // TODO: Support multiple memory nodes, as allowed by the specification.
     let memory = fdt.memory().unwrap();
     for fdt_region in memory.regions() {
-        let region = MemoryRegion::new(
-            fdt_region.starting_address as _,
-            fdt_region.starting_address as usize + fdt_region.size.unwrap(),
-        );
+        let region = fdt_to_pagetable_region(&fdt_region);
         info!(
             "Mapping memory region {:?} from FDT ({} MiB)...",
             region,
@@ -76,8 +75,17 @@ extern "C" fn main(fdt_address: *const u8) {
         idmap.activate();
     }
 
+    let mut pci_root = init_first_pci(&fdt, &mut idmap);
+
     shell::main(&mut console, &mut parts.rtc, &mut parts.gic);
 
     info!("Powering off.");
     PlatformImpl::power_off();
+}
+
+fn fdt_to_pagetable_region(region: &standard_nodes::MemoryRegion) -> MemoryRegion {
+    MemoryRegion::new(
+        region.starting_address as _,
+        region.starting_address as usize + region.size.unwrap(),
+    )
 }
