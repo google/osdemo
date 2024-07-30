@@ -3,6 +3,8 @@
 #![deny(clippy::undocumented_unsafe_blocks)]
 #![deny(unsafe_op_in_unsafe_fn)]
 
+extern crate alloc;
+
 mod apps;
 mod console;
 pub mod drivers;
@@ -15,7 +17,7 @@ mod virtio;
 
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use apps::shell;
-use buddy_system_allocator::Heap;
+use buddy_system_allocator::{Heap, LockedHeap};
 use core::fmt::Write;
 use flat_device_tree::{node::FdtNode, standard_nodes, Fdt};
 use log::{debug, info, LevelFilter};
@@ -24,10 +26,16 @@ use pci::{all_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
 use virtio::find_virtio_mmio_devices;
 
-const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
+const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
+
+const PAGE_HEAP_SIZE: usize = 10 * PAGE_SIZE;
 static mut PAGE_HEAP: [u8; PAGE_HEAP_SIZE] = [0; PAGE_HEAP_SIZE];
 
-const LOG_LEVEL: LevelFilter = LevelFilter::Info;
+const HEAP_SIZE: usize = 10 * PAGE_SIZE;
+static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
+
+#[global_allocator]
+static HEAP_ALLOCATOR: LockedHeap<32> = LockedHeap::new();
 
 #[no_mangle]
 extern "C" fn main(fdt_address: *const u8) {
@@ -45,6 +53,14 @@ extern "C" fn main(fdt_address: *const u8) {
     debug!("FDT: {:?}", fdt);
     for reserved in fdt.memory_reservations() {
         info!("Reserved memory: {:?}", reserved);
+    }
+
+    // SAFETY: `HEAP` is only used here and `entry` is only called once.
+    unsafe {
+        // Give the allocator some memory to allocate.
+        HEAP_ALLOCATOR
+            .lock()
+            .init(HEAP.as_mut_ptr() as usize, HEAP.len());
     }
 
     info!("Initialising GIC...");
