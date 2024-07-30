@@ -125,17 +125,21 @@ pub fn find_pci_roots(fdt: &Fdt, bar_range_limit: usize) -> Vec<PciRootInfo> {
 struct PciBarAllocator {
     memory32: FrameAllocator<32>,
     memory64: FrameAllocator<64>,
+    prefetchable_memory64: FrameAllocator<64>,
 }
 
 impl PciBarAllocator {
     fn new(ranges: Vec<PciRange>) -> Self {
         let mut memory32 = FrameAllocator::new();
         let mut memory64 = FrameAllocator::new();
+        let mut prefetchable_memory64 = FrameAllocator::new();
         for range in ranges {
-            // TODO: Distinguish prefetchable
             match range.flags.range_type() {
                 PciRangeType::Memory32 => {
                     assert_eq!(range.cpu_physical, range.bus_address);
+                    if range.flags.prefetchable() {
+                        warn!("32-bit PCI range was marked as prefetchable");
+                    }
                     memory32.add_frame(range.cpu_physical, range.cpu_physical + range.size);
                 }
                 PciRangeType::Memory64 => {
@@ -145,6 +149,9 @@ impl PciBarAllocator {
                         // as a 32-bit range. This is necessary for crosvm, which doesn't correctly
                         // provide any 32-bit ranges.
                         memory32.add_frame(range.cpu_physical, range.cpu_physical + range.size);
+                    } else if range.flags.prefetchable() {
+                        prefetchable_memory64
+                            .add_frame(range.cpu_physical, range.cpu_physical + range.size);
                     } else {
                         memory64.add_frame(range.cpu_physical, range.cpu_physical + range.size);
                     }
@@ -152,7 +159,11 @@ impl PciBarAllocator {
                 _ => {}
             }
         }
-        Self { memory32, memory64 }
+        Self {
+            memory32,
+            memory64,
+            prefetchable_memory64,
+        }
     }
 
     fn allocate32(&mut self, layout: Layout) -> u32 {
@@ -163,7 +174,14 @@ impl PciBarAllocator {
             .unwrap()
     }
 
-    fn allocate64(&mut self, layout: Layout) -> u64 {
+    fn allocate64(&mut self, layout: Layout, prefetchable: bool) -> u64 {
+        if prefetchable {
+            if let Some(allocation) = self.prefetchable_memory64.alloc_aligned(layout) {
+                return allocation.try_into().unwrap();
+            }
+            // If prefetchable allocation fails then fall back to non-prefetchable.
+        }
+
         if let Some(allocation) = self.memory64.alloc_aligned(layout) {
             allocation.try_into().unwrap()
         } else {
@@ -228,15 +246,17 @@ fn allocate_bars(
             } => {
                 if size > 0 {
                     let layout = Layout::from_size_align(size as usize, size as usize).unwrap();
-                    // TODO: Take account of prefetchable.
                     match address_type {
                         MemoryBarType::Width32 => {
+                            if prefetchable {
+                                warn!("  32-bit BAR should not be marked prefetchable.");
+                            }
                             let allocation = allocator.allocate32(layout);
                             info!("  allocated {:#0x}", allocation);
                             pci_root.set_bar_32(device_function, bar_index, allocation);
                         }
                         MemoryBarType::Width64 => {
-                            let allocation = allocator.allocate64(layout);
+                            let allocation = allocator.allocate64(layout, prefetchable);
                             info!("  allocated {:#0x}", allocation);
                             pci_root.set_bar_64(device_function, bar_index, allocation);
                         }
