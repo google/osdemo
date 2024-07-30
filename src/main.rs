@@ -27,7 +27,7 @@ use log::{debug, info, LevelFilter};
 use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
 use pci::{find_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
-use virtio::find_virtio_mmio_devices;
+use virtio::{find_virtio_mmio_devices, find_virtio_pci_devices};
 
 const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
 
@@ -100,6 +100,10 @@ extern "C" fn main(fdt_address: *const u8) {
         .into_iter()
         .map(|pci_root_info| unsafe { pci_root_info.init_pci() })
         .collect::<Vec<_>>();
+
+    for pci_root in &mut pci_roots {
+        find_virtio_pci_devices(pci_root, &mut devices);
+    }
 
     shell::main(
         &mut console,

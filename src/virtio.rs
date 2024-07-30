@@ -11,7 +11,7 @@ use virtio_drivers::{
     },
     transport::{
         mmio::{MmioError, MmioTransport, VirtIOHeader},
-        pci::PciTransport,
+        pci::{bus::PciRoot, virtio_device_type, PciTransport},
         DeviceStatus, DeviceType, Transport,
     },
     BufferDirection, Hal, PhysAddr, PAGE_SIZE,
@@ -76,6 +76,22 @@ fn init_virtio_device(transport: SomeTransport, devices: &mut Devices) {
         }
         t => {
             warn!("Ignoring unsupported VirtIO device type {:?}", t);
+        }
+    }
+}
+
+pub fn find_virtio_pci_devices(pci_root: &mut PciRoot, devices: &mut Devices) {
+    info!("Looking for VirtIO devices on PCI bus");
+    for (device_function, info) in pci_root.enumerate_bus(0) {
+        if let Some(virtio_type) = virtio_device_type(&info) {
+            info!("  VirtIO {:?} {} at {}", virtio_type, info, device_function);
+            let mut transport = PciTransport::new::<VirtioHal>(pci_root, device_function).unwrap();
+            info!(
+                "Detected virtio PCI device with device type {:?}, features {:#018x}",
+                transport.device_type(),
+                transport.read_device_features(),
+            );
+            init_virtio_device(transport.into(), devices);
         }
     }
 }
