@@ -23,7 +23,7 @@ spin = { version = "0.9.8", features = [
   "spin_mutex",
   "once",
 ], default-features = false }
-virtio-drivers = { version = "0.7.4", default-features = false, features = [
+virtio-drivers = { version = "0.7.5", default-features = false, features = [
   "alloc",
 ] }
 

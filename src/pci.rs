@@ -233,9 +233,14 @@ fn allocate_bars(
     allocator: &mut PciBarAllocator,
     device_function: DeviceFunction,
 ) -> Result<(), PciError> {
-    let mut bar_index = 0;
-    while bar_index < 6 {
-        let info = pci_root.bar_info(device_function, bar_index).unwrap();
+    for (bar_index, info) in pci_root
+        .bars(device_function)
+        .unwrap()
+        .into_iter()
+        .enumerate()
+    {
+        let Some(info) = info else { continue };
+        let bar_index = bar_index as u8;
         info!("BAR {}: {}", bar_index, info);
         match info {
             BarInfo::Memory {
@@ -270,8 +275,6 @@ fn allocate_bars(
                 warn!("Ignoring IO BAR");
             }
         }
-
-        bar_index += if info.takes_two_entries() { 2 } else { 1 };
     }
 
     // Enable the device to use its BARs.

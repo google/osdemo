@@ -157,13 +157,14 @@ fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot]) {
             if let Some(virtio_type) = virtio_device_type(&info) {
                 writeln!(console, "  VirtIO {:?}", virtio_type).unwrap();
             }
-            let mut bar_index = 0;
-            while bar_index < 6 {
-                let info = pci_root.bar_info(device_function, bar_index).unwrap();
-                writeln!(console, "  BAR {}: {}", bar_index, info).unwrap();
-                bar_index += 1;
-                if info.takes_two_entries() {
-                    bar_index += 1;
+            for (bar_index, info) in pci_root
+                .bars(device_function)
+                .unwrap()
+                .into_iter()
+                .enumerate()
+            {
+                if let Some(info) = info {
+                    writeln!(console, "  BAR {}: {}", bar_index, info).unwrap();
                 }
             }
         }
