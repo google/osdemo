@@ -41,13 +41,17 @@ $(QEMU_BIN): build.qemu
 crosvm: $(CROSVM_BIN)
 	adb shell 'mkdir -p /data/local/tmp/virt_raw'
 	adb push $< /data/local/tmp/virt_raw/demoos
-	adb shell "/apex/com.android.virt/bin/crosvm --log-level=info --extended-status run --disable-sandbox --bios=/data/local/tmp/virt_raw/demoos"
+	adb shell "/apex/com.android.virt/bin/crosvm --log-level=info --extended-status run --disable-sandbox --bios=/data/local/tmp/virt_raw/demoos --rwdisk=/dev/null"
 
 qemu: $(QEMU_BIN)
-	qemu-system-aarch64 -machine virt,gic-version=3 -cpu max -serial mon:stdio -display none -kernel $< -s \
+	qemu-system-aarch64 -machine virt,gic-version=3 -cpu max -display none -kernel $< -s \
+	  -serial mon:stdio \
 	  -global virtio-mmio.force-legacy=false \
 	  -drive file=/dev/null,if=none,format=raw,id=x0 \
-	  -device virtio-blk-device,drive=x0
+	  -device virtio-blk-device,drive=x0 \
+	  -device virtio-serial,id=virtio-serial0 \
+	  -chardev socket,path=/tmp/qemu-console,server,nowait,id=char0,mux=on \
+	  -device virtconsole,chardev=char0
 
 clean:
 	cargo clean
