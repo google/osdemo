@@ -76,6 +76,7 @@ extern "C" fn main(fdt_address: *const u8) {
         page_allocator.init(PAGE_HEAP.as_mut_ptr() as usize, PAGE_HEAP.len());
     }
     let mut idmap = IdMap::new(page_allocator);
+    info!("IdMap size is {} GiB", idmap.size() / (1024 * 1024 * 1024));
     map_fdt_regions(&fdt, &mut idmap);
 
     info!("Activating page table...");
