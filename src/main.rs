@@ -91,7 +91,13 @@ extern "C" fn main(fdt_address: *const u8) {
     // SAFETY: We only call this once, and `map_fdt_regions` mapped the MMIO regions.
     let mut pci_roots = unsafe { all_pci_roots(&fdt) };
 
-    shell::main(&mut console, &mut parts.rtc, &mut parts.gic, &mut pci_roots);
+    shell::main(
+        &mut console,
+        &mut parts.rtc,
+        &mut parts.gic,
+        &mut pci_roots,
+        &mut devices,
+    );
 
     info!("Powering off.");
     PlatformImpl::power_off();

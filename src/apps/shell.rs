@@ -1,5 +1,6 @@
 use crate::{
     apps::alarm,
+    devices::Devices,
     exceptions::set_irq_handler,
     pci::PciRoots,
     platform::{Platform, PlatformImpl},
@@ -10,7 +11,7 @@ use arm_gic::{
 };
 use arm_pl031::Rtc;
 use arrayvec::ArrayVec;
-use core::fmt::Write;
+use core::{fmt::Write, str};
 use embedded_io::Read;
 use log::info;
 use virtio_drivers::transport::pci::virtio_device_type;
@@ -22,6 +23,7 @@ pub fn main(
     rtc: &mut Rtc,
     gic: &mut GicV3,
     pci_roots: &mut PciRoots,
+    devices: &mut Devices,
 ) {
     info!("Configuring IRQs...");
     GicV3::set_priority_mask(0xff);
@@ -38,6 +40,7 @@ pub fn main(
             b"date" => date(console, rtc),
             b"exit" | [EOF] => break,
             b"help" => help(console),
+            b"lsdev" => lsdev(console, devices),
             b"lspci" => lspci(console, pci_roots),
             _ => {
                 writeln!(console, "Unrecognised command.").unwrap();
@@ -102,7 +105,30 @@ fn help(console: &mut (impl Write + Read)) {
     )
     .unwrap();
     writeln!(console, "  help - Prints this help").unwrap();
+    writeln!(console, "  lsdev - Lists devices").unwrap();
     writeln!(console, "  lspci - Lists devices on the PCI bus").unwrap();
+}
+
+fn lsdev(console: &mut impl Write, devices: &mut Devices) {
+    writeln!(console, "Block devices:").unwrap();
+    for (i, device) in devices.block.iter_mut().enumerate() {
+        let mut id_buffer = [0; 20];
+        let id_len = device.device_id(&mut id_buffer).unwrap();
+        let id = str::from_utf8(&id_buffer[..id_len]).unwrap();
+        writeln!(
+            console,
+            "  {}: \"{}\", capacity {} sectors, {}",
+            i,
+            id,
+            device.capacity(),
+            if device.readonly() {
+                "read-only"
+            } else {
+                "read-write"
+            }
+        )
+        .unwrap();
+    }
 }
 
 fn lspci(console: &mut impl Write, pci_roots: &mut PciRoots) {
