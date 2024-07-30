@@ -92,7 +92,7 @@ extern "C" fn main(fdt_address: *const u8) {
         idmap.activate();
     }
 
-    let mut devices = Devices::default();
+    let mut devices = Devices::new(parts.rtc);
     find_virtio_mmio_devices(&fdt, &mut devices);
 
     // SAFETY: We only call this once, and `map_fdt_regions` mapped the MMIO regions.
@@ -105,13 +105,7 @@ extern "C" fn main(fdt_address: *const u8) {
         find_virtio_pci_devices(pci_root, &mut devices);
     }
 
-    shell::main(
-        &mut console,
-        &mut parts.rtc,
-        &mut parts.gic,
-        &mut pci_roots,
-        &mut devices,
-    );
+    shell::main(&mut console, &mut parts.gic, &mut pci_roots, &mut devices);
 
     info!("Powering off.");
     PlatformImpl::power_off();

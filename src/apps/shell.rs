@@ -19,7 +19,6 @@ const EOF: u8 = 0x04;
 
 pub fn main(
     console: &mut (impl Write + Read),
-    rtc: &mut Rtc,
     gic: &mut GicV3,
     pci_roots: &mut [PciRoot],
     devices: &mut Devices,
@@ -35,8 +34,8 @@ pub fn main(
         let line = read_line(console);
         match line.as_ref() {
             b"" => {}
-            b"alarm" => alarm::alarm(console, rtc),
-            b"date" => date(console, rtc),
+            b"alarm" => alarm::alarm(console, &mut devices.rtc),
+            b"date" => date(console, &mut devices.rtc),
             b"exit" | [EOF] => break,
             b"help" => help(console),
             b"lsdev" => lsdev(console, devices),
