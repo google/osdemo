@@ -17,6 +17,7 @@ mod platform;
 mod virtio;
 
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
+use alloc::vec::Vec;
 use apps::shell;
 use buddy_system_allocator::{Heap, LockedHeap};
 use core::fmt::Write;
@@ -24,7 +25,7 @@ use devices::Devices;
 use flat_device_tree::{node::FdtNode, standard_nodes, Fdt};
 use log::{debug, info, LevelFilter};
 use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
-use pci::{all_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
+use pci::{find_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
 use virtio::find_virtio_mmio_devices;
 
@@ -79,6 +80,11 @@ extern "C" fn main(fdt_address: *const u8) {
     info!("IdMap size is {} GiB", idmap.size() / (1024 * 1024 * 1024));
     map_fdt_regions(&fdt, &mut idmap);
 
+    let pci_roots_info = find_pci_roots(&fdt, idmap.size());
+    for pci_root in &pci_roots_info {
+        pci_root.map_ranges(&mut idmap);
+    }
+
     info!("Activating page table...");
     // SAFETY: The page table maps all the memory we use, and we keep it until the end of the
     // program.
@@ -90,7 +96,10 @@ extern "C" fn main(fdt_address: *const u8) {
     find_virtio_mmio_devices(&fdt, &mut devices);
 
     // SAFETY: We only call this once, and `map_fdt_regions` mapped the MMIO regions.
-    let mut pci_roots = unsafe { all_pci_roots(&fdt) };
+    let mut pci_roots = pci_roots_info
+        .into_iter()
+        .map(|pci_root_info| unsafe { pci_root_info.init_pci() })
+        .collect::<Vec<_>>();
 
     shell::main(
         &mut console,

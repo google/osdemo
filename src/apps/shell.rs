@@ -2,7 +2,6 @@ use crate::{
     apps::alarm,
     devices::Devices,
     exceptions::set_irq_handler,
-    pci::PciRoots,
     platform::{Platform, PlatformImpl},
 };
 use arm_gic::{
@@ -14,7 +13,7 @@ use arrayvec::ArrayVec;
 use core::{fmt::Write, str};
 use embedded_io::Read;
 use log::info;
-use virtio_drivers::transport::pci::virtio_device_type;
+use virtio_drivers::transport::pci::{bus::PciRoot, virtio_device_type};
 
 const EOF: u8 = 0x04;
 
@@ -22,7 +21,7 @@ pub fn main(
     console: &mut (impl Write + Read),
     rtc: &mut Rtc,
     gic: &mut GicV3,
-    pci_roots: &mut PciRoots,
+    pci_roots: &mut [PciRoot],
     devices: &mut Devices,
 ) {
     info!("Configuring IRQs...");
@@ -145,7 +144,7 @@ fn lsdev(console: &mut impl Write, devices: &mut Devices) {
     }
 }
 
-fn lspci(console: &mut impl Write, pci_roots: &mut PciRoots) {
+fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot]) {
     writeln!(console, "{} PCI roots", pci_roots.len()).unwrap();
     for pci_root in pci_roots {
         for (device_function, info) in pci_root.enumerate_bus(0) {
