@@ -87,9 +87,10 @@ pub fn find_virtio_pci_devices(pci_root: &mut PciRoot, devices: &mut Devices) {
             info!("  VirtIO {:?} {} at {}", virtio_type, info, device_function);
             let mut transport = PciTransport::new::<VirtioHal>(pci_root, device_function).unwrap();
             info!(
-                "Detected virtio PCI device with device type {:?}, features {:#018x}",
+                "Detected virtio PCI device with device type {:?}, features {:#018x}, status {:?}",
                 transport.device_type(),
                 transport.read_device_features(),
+                transport.get_status(),
             );
             init_virtio_device(transport.into(), devices);
         }
