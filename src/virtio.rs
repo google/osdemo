@@ -1,4 +1,4 @@
-use crate::is_compatible;
+use crate::{devices::Devices, is_compatible};
 use alloc::alloc::{alloc_zeroed, dealloc, handle_alloc_error};
 use core::{alloc::Layout, mem::size_of, ptr::NonNull};
 use flat_device_tree::Fdt;
@@ -14,7 +14,7 @@ use virtio_drivers::{
 
 const VIRTIO_MMIO_COMPATIBLE: &str = "virtio,mmio";
 
-pub fn find_virtio_mmio_devices(fdt: &Fdt) {
+pub fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
     for node in fdt.all_nodes() {
         if is_compatible(&node, &[VIRTIO_MMIO_COMPATIBLE]) {
             debug!("Found VirtIO MMIO device {}", node.name);
@@ -45,7 +45,7 @@ pub fn find_virtio_mmio_devices(fdt: &Fdt) {
                                 transport.version(),
                                 transport.read_device_features(),
                             );
-                            init_virtio_device(transport);
+                            init_virtio_device(transport, devices);
                         }
                     }
                 }
@@ -56,10 +56,11 @@ pub fn find_virtio_mmio_devices(fdt: &Fdt) {
     }
 }
 
-fn init_virtio_device(transport: MmioTransport) {
+fn init_virtio_device(transport: MmioTransport, devices: &mut Devices) {
     match transport.device_type() {
         DeviceType::Block => {
-            let block = VirtIOBlk::<VirtioHal, _>::new(transport).unwrap();
+            let block = VirtIOBlk::new(transport).unwrap();
+            devices.block.push(block);
         }
         t => {
             warn!("Ignoring unsupported VirtIO device type {:?}", t);
@@ -68,7 +69,7 @@ fn init_virtio_device(transport: MmioTransport) {
 }
 
 #[derive(Debug)]
-struct VirtioHal;
+pub struct VirtioHal;
 
 unsafe impl Hal for VirtioHal {
     fn dma_alloc(pages: usize, _direction: BufferDirection) -> (PhysAddr, NonNull<u8>) {

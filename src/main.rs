@@ -7,6 +7,7 @@ extern crate alloc;
 
 mod apps;
 mod console;
+pub mod devices;
 pub mod drivers;
 mod exceptions;
 mod logger;
@@ -19,6 +20,7 @@ use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use apps::shell;
 use buddy_system_allocator::{Heap, LockedHeap};
 use core::fmt::Write;
+use devices::Devices;
 use flat_device_tree::{node::FdtNode, standard_nodes, Fdt};
 use log::{debug, info, LevelFilter};
 use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
@@ -83,7 +85,8 @@ extern "C" fn main(fdt_address: *const u8) {
         idmap.activate();
     }
 
-    find_virtio_mmio_devices(&fdt);
+    let mut devices = Devices::default();
+    find_virtio_mmio_devices(&fdt, &mut devices);
 
     // SAFETY: We only call this once, and `map_fdt_regions` mapped the MMIO regions.
     let mut pci_roots = unsafe { all_pci_roots(&fdt) };
