@@ -113,7 +113,13 @@ fn lsdev(console: &mut impl Write, devices: &mut Devices) {
     writeln!(console, "Block devices:").unwrap();
     for (i, device) in devices.block.iter_mut().enumerate() {
         let mut id_buffer = [0; 20];
-        let id_len = device.device_id(&mut id_buffer).unwrap();
+        let id_len = match device.device_id(&mut id_buffer) {
+            Ok(id_len) => id_len,
+            Err(e) => {
+                writeln!(console, "Error getting ID: {}", e).unwrap();
+                0
+            }
+        };
         let id = str::from_utf8(&id_buffer[..id_len]).unwrap();
         writeln!(
             console,
