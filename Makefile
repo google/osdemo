@@ -44,7 +44,10 @@ crosvm: $(CROSVM_BIN)
 	adb shell "/apex/com.android.virt/bin/crosvm --log-level=info --extended-status run --disable-sandbox --bios=/data/local/tmp/virt_raw/demoos"
 
 qemu: $(QEMU_BIN)
-	qemu-system-aarch64 -machine virt,gic-version=3 -cpu max -serial mon:stdio -display none -kernel $< -s
+	qemu-system-aarch64 -machine virt,gic-version=3 -cpu max -serial mon:stdio -display none -kernel $< -s \
+	  -global virtio-mmio.force-legacy=false \
+	  -drive file=/dev/null,if=none,format=raw,id=x0 \
+	  -device virtio-blk-device,drive=x0
 
 clean:
 	cargo clean
