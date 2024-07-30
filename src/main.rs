@@ -11,6 +11,7 @@ mod logger;
 mod pagetable;
 pub mod pci;
 mod platform;
+mod virtio;
 
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use apps::shell;
@@ -21,6 +22,7 @@ use log::{debug, info, LevelFilter};
 use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
 use pci::{all_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
+use virtio::find_virtio_mmio_devices;
 
 const PAGE_HEAP_SIZE: usize = 8 * PAGE_SIZE;
 static mut PAGE_HEAP: [u8; PAGE_HEAP_SIZE] = [0; PAGE_HEAP_SIZE];
@@ -64,6 +66,8 @@ extern "C" fn main(fdt_address: *const u8) {
     unsafe {
         idmap.activate();
     }
+
+    find_virtio_mmio_devices(&fdt);
 
     // SAFETY: We only call this once, and `map_fdt_regions` mapped the MMIO regions.
     let mut pci_roots = unsafe { all_pci_roots(&fdt) };
