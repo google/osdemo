@@ -129,6 +129,14 @@ fn lsdev(console: &mut impl Write, devices: &mut Devices) {
         )
         .unwrap();
     }
+    writeln!(console, "Console devices:").unwrap();
+    for (i, device) in devices.console.iter_mut().enumerate() {
+        writeln!(console, "  {}: {:?}", i, device.info()).unwrap();
+    }
+    writeln!(console, "Vsock devices:").unwrap();
+    for (i, device) in devices.vsock.iter_mut().enumerate() {
+        writeln!(console, "  {}: guest CID {}", i, device.guest_cid()).unwrap();
+    }
 }
 
 fn lspci(console: &mut impl Write, pci_roots: &mut PciRoots) {

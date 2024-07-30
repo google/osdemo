@@ -4,7 +4,11 @@ use core::{alloc::Layout, mem::size_of, ptr::NonNull};
 use flat_device_tree::Fdt;
 use log::{debug, error, info, warn};
 use virtio_drivers::{
-    device::blk::VirtIOBlk,
+    device::{
+        blk::VirtIOBlk,
+        console::VirtIOConsole,
+        socket::{VirtIOSocket, VsockConnectionManager},
+    },
     transport::{
         mmio::{MmioError, MmioTransport, VirtIOHeader},
         DeviceType, Transport,
@@ -59,8 +63,15 @@ pub fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
 fn init_virtio_device(transport: MmioTransport, devices: &mut Devices) {
     match transport.device_type() {
         DeviceType::Block => {
-            let block = VirtIOBlk::new(transport).unwrap();
-            devices.block.push(block);
+            devices.block.push(VirtIOBlk::new(transport).unwrap());
+        }
+        DeviceType::Console => {
+            devices.console.push(VirtIOConsole::new(transport).unwrap());
+        }
+        DeviceType::Socket => {
+            devices.vsock.push(VsockConnectionManager::new(
+                VirtIOSocket::new(transport).unwrap(),
+            ));
         }
         t => {
             warn!("Ignoring unsupported VirtIO device type {:?}", t);
