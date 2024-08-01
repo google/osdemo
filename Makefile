@@ -50,7 +50,7 @@ qemu: $(QEMU_BIN)
 	  -drive file=/dev/null,if=none,format=raw,id=x0 \
 	  -device virtio-blk-device,drive=x0 \
 	  -device virtio-serial,id=virtio-serial0 \
-	  -chardev socket,path=/tmp/qemu-console,server,nowait,id=char0,mux=on \
+	  -chardev socket,path=/tmp/qemu-console,server=on,wait=off,id=char0,mux=on \
 	  -device virtconsole,chardev=char0
 
 clean:
