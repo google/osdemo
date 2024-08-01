@@ -32,14 +32,21 @@ pub fn main(
     loop {
         write!(console, "$ ").unwrap();
         let line = read_line(console);
+        if line.as_ref() == [EOF] {
+            break;
+        }
+        let Ok(line) = str::from_utf8(&line) else {
+            writeln!(console, "Invalid UTF-8").unwrap();
+            continue;
+        };
         match line.as_ref() {
-            b"" => {}
-            b"alarm" => alarm::alarm(console, &mut devices.rtc),
-            b"date" => date(console, &mut devices.rtc),
-            b"exit" | [EOF] => break,
-            b"help" => help(console),
-            b"lsdev" => lsdev(console, devices),
-            b"lspci" => lspci(console, pci_roots),
+            "" => {}
+            "alarm" => alarm::alarm(console, &mut devices.rtc),
+            "date" => date(console, &mut devices.rtc),
+            "exit" => break,
+            "help" => help(console),
+            "lsdev" => lsdev(console, devices),
+            "lspci" => lspci(console, pci_roots),
             _ => {
                 writeln!(console, "Unrecognised command.").unwrap();
             }
