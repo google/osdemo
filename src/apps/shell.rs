@@ -39,8 +39,11 @@ pub fn main(
             writeln!(console, "Invalid UTF-8").unwrap();
             continue;
         };
-        match line.as_ref() {
-            "" => {}
+        let mut parts = line.split(' ');
+        let Some(command) = parts.next() else {
+            continue;
+        };
+        match command {
             "alarm" => alarm::alarm(console, &mut devices.rtc),
             "date" => date(console, &mut devices.rtc),
             "exit" => break,
