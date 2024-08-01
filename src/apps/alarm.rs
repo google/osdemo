@@ -34,11 +34,21 @@ pub fn irq_finish(rtc: &mut Rtc) {
 }
 
 /// Sets an alarm for 5 seconds in the future.
-pub fn alarm(console: &mut impl Write, rtc: &mut Rtc) {
+pub fn alarm<'a>(console: &mut impl Write, mut args: impl Iterator<Item = &'a str>, rtc: &mut Rtc) {
     irq_finish(rtc);
 
+    let Some(delay) = args.next() else {
+        writeln!(console, "Usage:").unwrap();
+        writeln!(console, "  alarm <delay>").unwrap();
+        return;
+    };
+    let Ok(delay) = delay.parse() else {
+        writeln!(console, "Invalid delay time").unwrap();
+        return;
+    };
+
     let timestamp = rtc.get_time();
-    let alarm_time = timestamp + Duration::seconds(4);
+    let alarm_time = timestamp + Duration::seconds(delay);
     rtc.set_match(alarm_time).unwrap();
     rtc.enable_interrupt(true);
     writeln!(console, "Set alarm for {}", alarm_time).unwrap();

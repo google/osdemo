@@ -44,7 +44,7 @@ pub fn main(
             continue;
         };
         match command {
-            "alarm" => alarm::alarm(console, &mut devices.rtc),
+            "alarm" => alarm::alarm(console, parts, &mut devices.rtc),
             "date" => date(console, &mut devices.rtc),
             "exit" => break,
             "help" => help(console),
