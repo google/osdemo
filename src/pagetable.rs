@@ -1,7 +1,7 @@
 use aarch64_paging::{
     paging::{
         Attributes, Constraints, MemoryRegion, PageTable, PhysicalAddress, Translation,
-        TranslationRegime, VaRange, VirtualAddress, PAGE_SIZE,
+        TranslationRegime, VaRange, VirtualAddress,
     },
     MapError, Mapping,
 };
@@ -83,8 +83,10 @@ impl IdMap {
         }
     }
 
+    /// Returns the size in bytes of the virtual address space which can be mapped in this page
+    /// table.
     pub fn size(&self) -> usize {
-        (PAGE_SIZE << ((3 - ROOT_LEVEL) * 9)) << 9
+        self.mapping.size()
     }
 
     /// Identity-maps the given range of pages with the given flags.
