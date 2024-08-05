@@ -47,7 +47,7 @@ extern "C" fn main(fdt_address: *const u8) {
     let mut parts = platform.parts().unwrap();
     writeln!(parts.console, "DemoOS starting...").unwrap();
     let mut console = console::init(parts.console);
-    logger::init(console, LOG_LEVEL).unwrap();
+    logger::init(console.shared(), LOG_LEVEL).unwrap();
     info!("FDT address: {:?}", fdt_address);
     // SAFETY: We trust that the FDT pointer we were given is valid, and this is the only time we
     // use it.
