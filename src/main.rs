@@ -34,7 +34,7 @@ const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 const PAGE_HEAP_SIZE: usize = 10 * PAGE_SIZE;
 static mut PAGE_HEAP: [u8; PAGE_HEAP_SIZE] = [0; PAGE_HEAP_SIZE];
 
-const HEAP_SIZE: usize = 10 * PAGE_SIZE;
+const HEAP_SIZE: usize = 20 * PAGE_SIZE;
 static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
 #[global_allocator]

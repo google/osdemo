@@ -51,7 +51,8 @@ qemu: $(QEMU_BIN)
 	  -device virtio-blk-device,drive=x0 \
 	  -device virtio-serial,id=virtio-serial0 \
 	  -chardev socket,path=/tmp/qemu-console,server=on,wait=off,id=char0,mux=on \
-	  -device virtconsole,chardev=char0
+	  -device virtconsole,chardev=char0 \
+	  -device vhost-vsock-device,id=virtiosocket0,guest-cid=102
 
 clean:
 	cargo clean
