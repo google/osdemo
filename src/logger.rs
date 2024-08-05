@@ -13,10 +13,13 @@
 // limitations under the License.
 
 use crate::console::SharedConsole;
-use core::fmt::Write;
+use embedded_io::Write;
 use log::{LevelFilter, Log, Metadata, Record, SetLoggerError};
 
-impl<T: Send + Write> Log for SharedConsole<T> {
+impl<T: Send + 'static> Log for SharedConsole<T>
+where
+    for<'a> &'a SharedConsole<T>: Write,
+{
     fn enabled(&self, _metadata: &Metadata) -> bool {
         true
     }

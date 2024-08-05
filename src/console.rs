@@ -1,5 +1,5 @@
 use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
-use core::{convert::Infallible, fmt, panic::PanicInfo};
+use core::{convert::Infallible, panic::PanicInfo};
 use embedded_io::{ErrorType, Read, ReadReady, Write};
 use percore::{exception_free, ExceptionLock};
 use spin::{mutex::SpinMutex, Once};
@@ -15,12 +15,6 @@ pub struct SharedConsole<T: Send> {
 
 impl<T: Send> ErrorType for &SharedConsole<T> {
     type Error = Infallible;
-}
-
-impl<T: Send + fmt::Write> fmt::Write for &SharedConsole<T> {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        exception_free(|token| self.console.borrow(token).lock().write_str(s))
-    }
 }
 
 impl<T: Send + ErrorType<Error = Self::Error> + Write> Write for &SharedConsole<T> {
