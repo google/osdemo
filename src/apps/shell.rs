@@ -13,7 +13,14 @@ use arrayvec::ArrayVec;
 use core::str;
 use embedded_io::{Read, Write};
 use log::info;
-use virtio_drivers::transport::pci::{bus::PciRoot, virtio_device_type};
+use virtio_drivers::{
+    device::socket::{DisconnectReason, VsockAddr, VsockConnectionManager, VsockEventType},
+    transport::{
+        pci::{bus::PciRoot, virtio_device_type},
+        Transport,
+    },
+    Hal,
+};
 
 const EOF: u8 = 0x04;
 
@@ -50,6 +57,7 @@ pub fn main(
             "help" => help(console),
             "lsdev" => lsdev(console, devices),
             "lspci" => lspci(console, pci_roots),
+            "vcat" => vcat(console, parts, &mut devices.vsock),
             _ => {
                 writeln!(console, "Unrecognised command.").unwrap();
             }
@@ -115,6 +123,7 @@ fn help(console: &mut (impl Write + Read)) {
     writeln!(console, "  help - Prints this help").unwrap();
     writeln!(console, "  lsdev - Lists devices").unwrap();
     writeln!(console, "  lspci - Lists devices on the PCI bus").unwrap();
+    writeln!(console, "  vcat - Communicates with a vsock port").unwrap();
 }
 
 fn lsdev(console: &mut impl Write, devices: &mut Devices) {
@@ -176,6 +185,78 @@ fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot]) {
                 if let Some(info) = info {
                     writeln!(console, "  BAR {}: {}", bar_index, info).unwrap();
                 }
+            }
+        }
+    }
+}
+
+fn vcat<'a, H: Hal, T: Transport>(
+    console: &mut (impl Write + Read),
+    args: impl Iterator<Item = &'a str>,
+    vsock: &mut [VsockConnectionManager<H, T>],
+) {
+    let args = args.collect::<ArrayVec<_, 4>>();
+    if args.len() != 2 {
+        writeln!(console, "Usage:").unwrap();
+        writeln!(console, "  vcat <CID> <port>").unwrap();
+        return;
+    }
+    let Ok(cid) = args[0].parse() else {
+        writeln!(console, "Invalid CID {}", args[0]).unwrap();
+        return;
+    };
+    let Ok(port) = args[1].parse() else {
+        writeln!(console, "Invalid port {}", args[1]).unwrap();
+        return;
+    };
+    let Some(vsock) = vsock.get_mut(0) else {
+        writeln!(console, "No vsock device found.").unwrap();
+        return;
+    };
+    let local_port = 42;
+    let peer = VsockAddr { cid, port };
+    writeln!(console, "Connecting to {}:{}...", peer.cid, peer.port).unwrap();
+    vsock.connect(peer, local_port).unwrap();
+
+    loop {
+        if let Some(event) = vsock.poll().unwrap() {
+            if event.destination.port == local_port && event.source == peer {
+                match event.event_type {
+                    VsockEventType::Connected => {
+                        writeln!(console, "Connected.").unwrap();
+                    }
+                    VsockEventType::Disconnected {
+                        reason: DisconnectReason::Shutdown,
+                    } => {
+                        writeln!(console, "Connection shut down.").unwrap();
+                        return;
+                    }
+                    VsockEventType::Disconnected {
+                        reason: DisconnectReason::Reset,
+                    } => {
+                        writeln!(console, "Connection reset.").unwrap();
+                        return;
+                    }
+                    VsockEventType::Received { .. } => {
+                        while vsock.recv_buffer_available_bytes(peer, local_port).unwrap() > 0 {
+                            let mut recv_buffer = [0; 10];
+                            let bytes_read =
+                                vsock.recv(peer, local_port, &mut recv_buffer).unwrap();
+                            console.write_all(&recv_buffer[0..bytes_read]).unwrap();
+                        }
+                    }
+                    VsockEventType::CreditUpdate => {}
+                    _ => {
+                        writeln!(console, "Event: {:?}", event).unwrap();
+                    }
+                }
+            } else {
+                writeln!(
+                    console,
+                    "Event for unexpected source or destination: {:?}",
+                    event
+                )
+                .unwrap();
             }
         }
     }
