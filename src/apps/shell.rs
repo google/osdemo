@@ -10,8 +10,8 @@ use arm_gic::{
 };
 use arm_pl031::Rtc;
 use arrayvec::ArrayVec;
-use core::{fmt::Write, str};
-use embedded_io::Read;
+use core::str;
+use embedded_io::{Read, Write};
 use log::info;
 use virtio_drivers::transport::pci::{bus::PciRoot, virtio_device_type};
 
@@ -65,17 +65,17 @@ fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<u8, 128> {
         console.read_exact(&mut c).unwrap();
         match c[0] {
             b'\r' | b'\n' => {
-                console.write_str("\r\n").unwrap();
+                console.write_all(b"\r\n").unwrap();
                 return line;
             }
             EOF if line.is_empty() => {
-                console.write_str("\r\n").unwrap();
+                console.write_all(b"\r\n").unwrap();
                 line.push(EOF);
                 return line;
             }
             c => {
                 if !c.is_ascii_control() {
-                    console.write_char(c.into()).unwrap();
+                    console.write_all(&[c]).unwrap();
                     line.push(c);
                 }
             }

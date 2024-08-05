@@ -2,10 +2,8 @@ use crate::platform::{Platform, PlatformImpl};
 use arm_gic::gicv3::{GicV3, Trigger};
 use arm_pl031::Rtc;
 use chrono::Duration;
-use core::{
-    fmt::Write,
-    sync::atomic::{AtomicBool, Ordering},
-};
+use core::sync::atomic::{AtomicBool, Ordering};
+use embedded_io::Write;
 use log::info;
 
 /// The RTC alarm IRQ has fired, and we have not yet cleared the interrupt.
