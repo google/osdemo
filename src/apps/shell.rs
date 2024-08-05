@@ -11,7 +11,7 @@ use arm_gic::{
 use arm_pl031::Rtc;
 use arrayvec::ArrayVec;
 use core::str;
-use embedded_io::{Read, Write};
+use embedded_io::{Read, ReadReady, Write};
 use log::info;
 use virtio_drivers::{
     device::socket::{DisconnectReason, VsockAddr, VsockConnectionManager, VsockEventType},
@@ -25,7 +25,7 @@ use virtio_drivers::{
 const EOF: u8 = 0x04;
 
 pub fn main(
-    console: &mut (impl Write + Read),
+    console: &mut (impl Write + Read + ReadReady),
     gic: &mut GicV3,
     pci_roots: &mut [PciRoot],
     devices: &mut Devices,
@@ -191,7 +191,7 @@ fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot]) {
 }
 
 fn vcat<'a, H: Hal, T: Transport>(
-    console: &mut (impl Write + Read),
+    console: &mut (impl Write + Read + ReadReady),
     args: impl Iterator<Item = &'a str>,
     vsock: &mut [VsockConnectionManager<H, T>],
 ) {
@@ -219,6 +219,13 @@ fn vcat<'a, H: Hal, T: Transport>(
     vsock.connect(peer, local_port).unwrap();
 
     loop {
+        if console.read_ready().unwrap() {
+            let mut buffer = [0; 8];
+            let bytes_read = console.read(&mut buffer).unwrap();
+            vsock
+                .send(peer, local_port, &buffer[0..bytes_read])
+                .unwrap();
+        }
         if let Some(event) = vsock.poll().unwrap() {
             if event.destination.port == local_port && event.source == peer {
                 match event.event_type {
