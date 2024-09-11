@@ -16,10 +16,8 @@ use cc::Build;
 use std::env;
 
 fn main() {
-    #[cfg(target_os = "linux")]
-    env::set_var("CROSS_COMPILE", "aarch64-linux-gnu");
-    #[cfg(not(target_os = "linux"))]
     env::set_var("CROSS_COMPILE", "aarch64-none-elf");
+    env::set_var("CC", "clang");
 
     let platform = env::var("CARGO_CFG_PLATFORM").expect("Missing platform name");
     match platform.as_ref() {
