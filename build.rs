@@ -16,6 +16,8 @@ use cc::Build;
 use std::env;
 
 fn main() {
+    println!("cargo::rustc-check-cfg=cfg(platform, values(\"crosvm\", \"qemu\"))");
+
     env::set_var("CROSS_COMPILE", "aarch64-none-elf");
     env::set_var("CC", "clang");
 
