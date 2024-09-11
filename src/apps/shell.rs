@@ -12,6 +12,7 @@ use arm_pl031::Rtc;
 use arrayvec::ArrayVec;
 use core::str;
 use embedded_io::{Read, ReadReady, Write};
+use flat_device_tree::Fdt;
 use log::info;
 use virtio_drivers::{
     device::socket::{DisconnectReason, VsockAddr, VsockConnectionManager, VsockEventType},
@@ -29,6 +30,7 @@ pub fn main(
     gic: &mut GicV3,
     pci_roots: &mut [PciRoot],
     devices: &mut Devices,
+    fdt: &Fdt,
 ) {
     info!("Configuring IRQs...");
     GicV3::set_priority_mask(0xff);
@@ -53,6 +55,7 @@ pub fn main(
         match command {
             "alarm" => alarm::alarm(console, parts, &mut devices.rtc),
             "date" => date(console, &mut devices.rtc),
+            "dtdump" => dtdump(console, fdt),
             "exit" => break,
             "help" => help(console),
             "lsdev" => lsdev(console, devices),
@@ -107,6 +110,10 @@ fn date(console: &mut (impl Write + Read), rtc: &mut Rtc) {
     writeln!(console, "{}", time).unwrap();
 }
 
+fn dtdump(console: &mut impl Write, fdt: &Fdt) {
+    writeln!(console, "{:?}", fdt).unwrap();
+}
+
 fn help(console: &mut (impl Write + Read)) {
     writeln!(console, "Commands:").unwrap();
     writeln!(
@@ -115,6 +122,7 @@ fn help(console: &mut (impl Write + Read)) {
     )
     .unwrap();
     writeln!(console, "  date - Prints the current date and time").unwrap();
+    writeln!(console, "  dtdump - Dumps the device tree to the console").unwrap();
     writeln!(
         console,
         "  exit - Exits the shell and powers off the system"

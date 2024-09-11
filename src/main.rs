@@ -105,7 +105,13 @@ extern "C" fn main(fdt_address: *const u8) {
         find_virtio_pci_devices(pci_root, &mut devices);
     }
 
-    shell::main(&mut console, &mut parts.gic, &mut pci_roots, &mut devices);
+    shell::main(
+        &mut console,
+        &mut parts.gic,
+        &mut pci_roots,
+        &mut devices,
+        &fdt,
+    );
 
     info!("Powering off.");
     PlatformImpl::power_off();
