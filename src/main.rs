@@ -20,22 +20,23 @@ use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use alloc::vec::Vec;
 use apps::shell;
 use buddy_system_allocator::{Heap, LockedHeap};
-use core::fmt::Write;
+use core::{fmt::Write, ops::DerefMut};
 use devices::Devices;
 use flat_device_tree::{node::FdtNode, standard_nodes, Fdt};
 use log::{debug, info, LevelFilter};
 use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
 use pci::{find_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
+use spin::mutex::{SpinMutex, SpinMutexGuard};
 use virtio::{find_virtio_mmio_devices, find_virtio_pci_devices};
 
 const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
 const PAGE_HEAP_SIZE: usize = 10 * PAGE_SIZE;
-static mut PAGE_HEAP: [u8; PAGE_HEAP_SIZE] = [0; PAGE_HEAP_SIZE];
+static PAGE_HEAP: SpinMutex<[u8; PAGE_HEAP_SIZE]> = SpinMutex::new([0; PAGE_HEAP_SIZE]);
 
 const HEAP_SIZE: usize = 20 * PAGE_SIZE;
-static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
+static HEAP: SpinMutex<[u8; HEAP_SIZE]> = SpinMutex::new([0; HEAP_SIZE]);
 
 #[global_allocator]
 static HEAP_ALLOCATOR: LockedHeap<32> = LockedHeap::new();
@@ -58,24 +59,21 @@ extern "C" fn main(fdt_address: *const u8) {
         info!("Reserved memory: {:?}", reserved);
     }
 
-    // SAFETY: `HEAP` is only used here and `entry` is only called once.
-    unsafe {
-        // Give the allocator some memory to allocate.
-        HEAP_ALLOCATOR
-            .lock()
-            .init(HEAP.as_mut_ptr() as usize, HEAP.len());
-    }
+    // Give the allocator some memory to allocate.
+    add_to_heap(
+        HEAP_ALLOCATOR.lock().deref_mut(),
+        SpinMutexGuard::leak(HEAP.try_lock().unwrap()).as_mut_slice(),
+    );
 
     info!("Initialising GIC...");
     parts.gic.setup();
 
     info!("Initialising page table...");
     let mut page_allocator = Heap::new();
-    // SAFETY: We only do this once, as `Once::call_once` guarantees. Nothing else accesses the
-    // `HEAP` mutable static.
-    unsafe {
-        page_allocator.init(PAGE_HEAP.as_mut_ptr() as usize, PAGE_HEAP.len());
-    }
+    add_to_heap(
+        &mut page_allocator,
+        SpinMutexGuard::leak(PAGE_HEAP.try_lock().unwrap()).as_mut_slice(),
+    );
     let mut idmap = IdMap::new(page_allocator);
     info!("IdMap size is {} GiB", idmap.size() / (1024 * 1024 * 1024));
     map_fdt_regions(&fdt, &mut idmap);
@@ -115,6 +113,15 @@ extern "C" fn main(fdt_address: *const u8) {
 
     info!("Powering off.");
     PlatformImpl::power_off();
+}
+
+/// Adds the given memory range to the given heap.
+fn add_to_heap<const ORDER: usize>(heap: &mut Heap<ORDER>, range: &'static mut [u8]) {
+    // SAFETY: The range we pass is valid because it comes from a mutable static reference, which it
+    // effectively takes ownership of.
+    unsafe {
+        heap.init(range.as_mut_ptr() as usize, range.len());
+    }
 }
 
 /// Maps memory and device regions from the FDT.
