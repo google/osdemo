@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-aarch64-paging = { version = "0.7.1", default-features = false }
+aarch64-paging = { version = "0.8.0", default-features = false }
 arm_pl031 = "0.2.1"
 arm-gic = "0.1.1"
 arrayvec = { version = "0.7.6", default-features = false }
