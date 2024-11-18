@@ -1,3 +1,7 @@
+// Copyright 2024 Google LLC.
+// This project is dual-licensed under Apache 2.0 and MIT terms.
+// See LICENSE-APACHE and LICENSE-MIT for details.
+
 use crate::{devices::Devices, is_compatible};
 use alloc::alloc::{alloc_zeroed, dealloc, handle_alloc_error};
 use core::{alloc::Layout, mem::size_of, ptr::NonNull};

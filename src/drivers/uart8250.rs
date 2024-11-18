@@ -1,3 +1,7 @@
+// Copyright 2024 Google LLC.
+// This project is dual-licensed under Apache 2.0 and MIT terms.
+// See LICENSE-APACHE and LICENSE-MIT for details.
+
 //! Minimal driver for an 8250 UART. This only implements enough to work with the emulated 8250
 //! provided by crosvm, and won't work with real hardware.
 

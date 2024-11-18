@@ -1,3 +1,7 @@
+// Copyright 2024 Google LLC.
+// This project is dual-licensed under Apache 2.0 and MIT terms.
+// See LICENSE-APACHE and LICENSE-MIT for details.
+
 use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
 use core::{convert::Infallible, panic::PanicInfo};
 use embedded_io::{ErrorType, Read, ReadReady, Write};
