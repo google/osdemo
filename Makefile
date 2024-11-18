@@ -14,9 +14,9 @@
 
 TARGET := --target aarch64-unknown-none
 
-CROSVM_BIN := target/demoos.crosvm.bin
+CROSVM_BIN := target/osdemo.crosvm.bin
 CROSVM_RUSTFLAGS := "--cfg platform=\"crosvm\""
-QEMU_BIN := target/demoos.qemu.bin
+QEMU_BIN := target/osdemo.qemu.bin
 QEMU_RUSTFLAGS := "--cfg platform=\"qemu\""
 
 .PHONY: all build.qemu build.crosvm clean clippy crosvm qemu
@@ -40,8 +40,8 @@ $(QEMU_BIN): build.qemu
 
 crosvm: $(CROSVM_BIN)
 	adb shell 'mkdir -p /data/local/tmp/virt_raw'
-	adb push $< /data/local/tmp/virt_raw/demoos
-	adb shell "/apex/com.android.virt/bin/crosvm --log-level=info --extended-status run --disable-sandbox --bios=/data/local/tmp/virt_raw/demoos --rwdisk=/dev/null"
+	adb push $< /data/local/tmp/virt_raw/osdemo
+	adb shell "/apex/com.android.virt/bin/crosvm --log-level=info --extended-status run --disable-sandbox --bios=/data/local/tmp/virt_raw/osdemo --rwdisk=/dev/null"
 
 qemu: $(QEMU_BIN)
 	qemu-system-aarch64 -machine virt,gic-version=3 -cpu max -display none -kernel $< -s \
