@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
-use core::{convert::Infallible, panic::PanicInfo};
+use core::panic::PanicInfo;
 use embedded_io::{ErrorType, Read, ReadReady, Write};
 use percore::{exception_free, ExceptionLock};
 use spin::{mutex::SpinMutex, Once};
@@ -17,11 +17,11 @@ pub struct SharedConsole<T: Send> {
     console: ExceptionLock<SpinMutex<T>>,
 }
 
-impl<T: Send> ErrorType for &SharedConsole<T> {
-    type Error = Infallible;
+impl<T: ErrorType + Send> ErrorType for &SharedConsole<T> {
+    type Error = T::Error;
 }
 
-impl<T: Send + ErrorType<Error = Self::Error> + Write> Write for &SharedConsole<T> {
+impl<T: ErrorType + Send + Write> Write for &SharedConsole<T> {
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
         exception_free(|token| self.console.borrow(token).lock().write(buf))
     }
@@ -46,7 +46,7 @@ impl<T: Send + 'static> Console<T> {
     }
 }
 
-impl<T: Send + ErrorType<Error = Self::Error> + Write> Write for Console<T> {
+impl<T: ErrorType + Send + Write> Write for Console<T> {
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
         self.shared.write(buf)
     }
@@ -56,11 +56,11 @@ impl<T: Send + ErrorType<Error = Self::Error> + Write> Write for Console<T> {
     }
 }
 
-impl<T: Send + 'static> ErrorType for Console<T> {
-    type Error = Infallible;
+impl<T: ErrorType + Send + 'static> ErrorType for Console<T> {
+    type Error = T::Error;
 }
 
-impl<T: Send + ErrorType<Error = Self::Error> + Read + ReadReady + 'static> Read for Console<T> {
+impl<T: ErrorType + Read + ReadReady + Send + 'static> Read for Console<T> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
         // Wait until the console has some data to read, without holding the lock and keeping
         // exceptions masked the whole time.
@@ -78,7 +78,7 @@ impl<T: Send + ErrorType<Error = Self::Error> + Read + ReadReady + 'static> Read
     }
 }
 
-impl<T: Send + ErrorType<Error = Self::Error> + ReadReady + 'static> ReadReady for Console<T> {
+impl<T: ErrorType + ReadReady + Send + 'static> ReadReady for Console<T> {
     fn read_ready(&mut self) -> Result<bool, Self::Error> {
         exception_free(|token| self.shared.console.borrow(token).lock().read_ready())
     }

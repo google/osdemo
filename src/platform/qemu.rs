@@ -3,10 +3,10 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use super::{Platform, PlatformParts};
-use crate::drivers::pl011::Uart;
 use arm_gic::gicv3::{GicV3, IntId};
 use arm_pl031::Rtc;
 use log::error;
+use pl011_uart::Uart;
 use smccc::{psci::system_off, Hvc};
 
 /// Base address of the first PL011 UART.
