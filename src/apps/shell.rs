@@ -21,7 +21,10 @@ use log::info;
 use virtio_drivers::{
     device::socket::{DisconnectReason, VsockAddr, VsockConnectionManager, VsockEventType},
     transport::{
-        pci::{bus::PciRoot, virtio_device_type},
+        pci::{
+            bus::{MmioCam, PciRoot},
+            virtio_device_type,
+        },
         Transport,
     },
     Hal,
@@ -32,7 +35,7 @@ const EOF: u8 = 0x04;
 pub fn main(
     console: &mut (impl Write + Read + ReadReady),
     gic: &mut GicV3,
-    pci_roots: &mut [PciRoot],
+    pci_roots: &mut [PciRoot<MmioCam>],
     devices: &mut Devices,
     fdt: &Fdt,
 ) {
@@ -166,7 +169,7 @@ fn lsdev(console: &mut impl Write, devices: &mut Devices) {
     }
     writeln!(console, "Console devices:").unwrap();
     for (i, device) in devices.console.iter_mut().enumerate() {
-        writeln!(console, "  {}: {:?}", i, device.info()).unwrap();
+        writeln!(console, "  {}: {:?}", i, device.size().unwrap()).unwrap();
     }
     writeln!(console, "Vsock devices:").unwrap();
     for (i, device) in devices.vsock.iter_mut().enumerate() {
@@ -174,7 +177,7 @@ fn lsdev(console: &mut impl Write, devices: &mut Devices) {
     }
 }
 
-fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot]) {
+fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot<MmioCam>]) {
     writeln!(console, "{} PCI roots", pci_roots.len()).unwrap();
     for pci_root in pci_roots {
         for (device_function, info) in pci_root.enumerate_bus(0) {

@@ -2,11 +2,12 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::virtio::{SomeTransport, VirtioHal};
+use crate::virtio::VirtioHal;
 use alloc::vec::Vec;
 use arm_pl031::Rtc;
-use virtio_drivers::device::{
-    blk::VirtIOBlk, console::VirtIOConsole, socket::VsockConnectionManager,
+use virtio_drivers::{
+    device::{blk::VirtIOBlk, console::VirtIOConsole, socket::VsockConnectionManager},
+    transport::SomeTransport,
 };
 
 pub struct Devices {

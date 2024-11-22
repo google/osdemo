@@ -14,7 +14,7 @@ use core::{
 use flat_device_tree::{node::FdtNode, standard_nodes::MemoryRange, Fdt};
 use log::{info, warn};
 use virtio_drivers::transport::pci::bus::{
-    BarInfo, Cam, Command, DeviceFunction, MemoryBarType, PciError, PciRoot,
+    BarInfo, Cam, Command, DeviceFunction, MemoryBarType, MmioCam, PciError, PciRoot,
 };
 
 pub const PCI_COMPATIBLE: &str = "pci-host-cam-generic";
@@ -88,9 +88,9 @@ impl PciRootInfo {
     ///
     /// This must only be called once per PCI root, to avoid creating aliases to the MMIO space. The
     /// root info must refer to a valid MMIO region which has already been mapped appropriately.
-    pub unsafe fn init_pci(self) -> PciRoot {
+    pub unsafe fn init_pci(self) -> PciRoot<MmioCam> {
         // SAFETY: The caller promises that the pointer is to a valid MMIO region.
-        let mut pci_root = unsafe { PciRoot::new(self.mmio_base, self.cam) };
+        let mut pci_root = PciRoot::new(unsafe { MmioCam::new(self.mmio_base, self.cam) });
 
         let mut allocator = PciBarAllocator::new(self.ranges);
         for (device_function, info) in pci_root.enumerate_bus(0) {
@@ -233,7 +233,7 @@ impl Display for PciRange {
 
 /// Allocates all bars of the given PCI device function.
 fn allocate_bars(
-    pci_root: &mut PciRoot,
+    pci_root: &mut PciRoot<MmioCam>,
     allocator: &mut PciBarAllocator,
     device_function: DeviceFunction,
 ) -> Result<(), PciError> {
