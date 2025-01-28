@@ -3,7 +3,10 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use super::{Platform, PlatformParts};
-use crate::drivers::uart8250::Uart;
+use crate::{
+    drivers::uart8250::Uart,
+    pagetable::{InitialIdmap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
+};
 use arm_gic::gicv3::{GicV3, IntId};
 use arm_pl031::Rtc;
 use log::error;
@@ -23,6 +26,20 @@ const GICR_BASE_ADDRESS: *mut u64 = 0x3ffd_0000 as _;
 
 pub struct Crosvm {
     parts: Option<PlatformParts<Uart, Rtc>>,
+}
+
+impl Crosvm {
+    /// Returns the initial hard-coded page table to use before the Rust code starts.
+    pub const fn initial_idmap() -> InitialIdmap {
+        let mut idmap = [0; 512];
+        // 1 GiB of device mappings.
+        idmap[0] = DEVICE_ATTRIBUTES.bits();
+        // Another 1 GiB of device mappings.
+        idmap[1] = DEVICE_ATTRIBUTES.bits() | 0x40000000;
+        // 1 GiB of DRAM.
+        idmap[2] = MEMORY_ATTRIBUTES.bits() | 0x80000000;
+        InitialIdmap(idmap)
+    }
 }
 
 impl Platform for Crosvm {

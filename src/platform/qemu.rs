@@ -3,6 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use super::{Platform, PlatformParts};
+use crate::pagetable::{InitialIdmap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
 use arm_gic::gicv3::{GicV3, IntId};
 use arm_pl031::Rtc;
 use log::error;
@@ -24,6 +25,17 @@ const GICR_BASE_ADDRESS: *mut u64 = 0x80A_0000 as _;
 /// The QEMU aarch64 virt platform.
 pub struct Qemu {
     parts: Option<PlatformParts<Uart, Rtc>>,
+}
+
+impl Qemu {
+    /// Returns the initial hard-coded page table to use before the Rust code starts.
+    pub const fn initial_idmap() -> InitialIdmap {
+        let mut idmap = [0; 512];
+        idmap[0] = DEVICE_ATTRIBUTES.bits();
+        idmap[1] = MEMORY_ATTRIBUTES.bits() | 0x40000000;
+        idmap[256] = DEVICE_ATTRIBUTES.bits() | 0x4000000000;
+        InitialIdmap(idmap)
+    }
 }
 
 impl Platform for Qemu {

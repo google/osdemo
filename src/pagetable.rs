@@ -2,6 +2,7 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
+use crate::platform::PlatformImpl;
 use aarch64_paging::{
     paging::{
         Attributes, Constraints, MemoryRegion, PageTable, PhysicalAddress, Translation,
@@ -118,3 +119,14 @@ impl IdMap {
         }
     }
 }
+
+/// The initial hardcoded page table used before the Rust code starts and activates the main page
+/// table.
+#[unsafe(export_name = "idmap")]
+#[unsafe(link_section = ".rodata.idmap")]
+static INITIAL_IDMAP: InitialIdmap = PlatformImpl::initial_idmap();
+
+/// A hardcoded pagetable.
+#[repr(align(4096))]
+#[allow(dead_code)]
+pub struct InitialIdmap(pub [usize; 512]);

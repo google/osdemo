@@ -6,7 +6,3 @@ use core::arch::global_asm;
 
 global_asm!(include_str!("asm/entry.S"));
 global_asm!(include_str!("asm/exceptions.S"));
-#[cfg(platform = "qemu")]
-global_asm!(include_str!(concat!("asm/idmap_qemu.S")));
-#[cfg(platform = "crosvm")]
-global_asm!(include_str!(concat!("asm/idmap_crosvm.S")));
