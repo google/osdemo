@@ -2,7 +2,6 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use cc::Build;
 use std::env;
 
 const PLATFORMS: [&str; 2] = ["crosvm", "qemu"];
@@ -24,11 +23,6 @@ fn main() {
         PLATFORMS,
     );
 
-    Build::new()
-        .file("asm/entry.S")
-        .file("asm/exceptions.S")
-        .file(format!("asm/idmap_{}.S", platform))
-        .compile("empty");
     println!("cargo:rustc-link-arg=-Tlinker/{platform}.ld");
     println!("cargo:rustc-link-arg=-Tlinker/image.ld");
 }
