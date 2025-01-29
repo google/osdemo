@@ -12,9 +12,6 @@ fn main() {
         PLATFORMS.join("\", \"")
     );
 
-    env::set_var("CROSS_COMPILE", "aarch64-none-elf");
-    env::set_var("CC", "clang");
-
     let platform = env::var("CARGO_CFG_PLATFORM").expect("Missing platform name");
     assert!(
         PLATFORMS.contains(&platform.as_str()),
