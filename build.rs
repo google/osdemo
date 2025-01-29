@@ -22,4 +22,6 @@ fn main() {
 
     println!("cargo:rustc-link-arg=-Tlinker/{platform}.ld");
     println!("cargo:rustc-link-arg=-Tlinker/image.ld");
+    println!("cargo:rerun-if-changed=linker/{platform}.ld");
+    println!("cargo:rerun-if-changed=linker/image.ld");
 }
