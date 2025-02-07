@@ -20,8 +20,7 @@ fn main() {
         PLATFORMS,
     );
 
+    println!("cargo:rustc-link-arg=-Timage.ld");
     println!("cargo:rustc-link-arg=-Tlinker/{platform}.ld");
-    println!("cargo:rustc-link-arg=-Tlinker/image.ld");
     println!("cargo:rerun-if-changed=linker/{platform}.ld");
-    println!("cargo:rerun-if-changed=linker/image.ld");
 }

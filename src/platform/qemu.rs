@@ -6,8 +6,9 @@ use super::{Platform, PlatformParts};
 use crate::{
     console::Console,
     exceptions::set_irq_handler,
-    pagetable::{InitialIdmap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
+    pagetable::{DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
 };
+use aarch64_rt::InitialPagetable;
 use arm_gic::{gicv3::GicV3, IntId, Trigger};
 use arm_pl011_uart::{Interrupts, OwnedMmioPointer, PL011Registers, Uart};
 use arm_pl031::Rtc;
@@ -36,12 +37,12 @@ impl Qemu {
     const CONSOLE_IRQ: IntId = IntId::spi(1);
 
     /// Returns the initial hard-coded page table to use before the Rust code starts.
-    pub const fn initial_idmap() -> InitialIdmap {
+    pub const fn initial_idmap() -> InitialPagetable {
         let mut idmap = [0; 512];
         idmap[0] = DEVICE_ATTRIBUTES.bits();
         idmap[1] = MEMORY_ATTRIBUTES.bits() | 0x40000000;
         idmap[256] = DEVICE_ATTRIBUTES.bits() | 0x4000000000;
-        InitialIdmap(idmap)
+        InitialPagetable(idmap)
     }
 }
 
