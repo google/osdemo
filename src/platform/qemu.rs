@@ -5,13 +5,14 @@
 use super::{Platform, PlatformParts};
 use crate::pagetable::{InitialIdmap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
 use arm_gic::gicv3::{GicV3, IntId};
+use arm_pl011_uart::{OwnedMmioPointer, PL011Registers, Uart};
 use arm_pl031::Rtc;
+use core::ptr::NonNull;
 use log::error;
-use pl011_uart::Uart;
 use smccc::{psci::system_off, Hvc};
 
 /// Base address of the first PL011 UART.
-const UART_BASE_ADDRESS: *mut u32 = 0x900_0000 as _;
+const UART_BASE_ADDRESS: *mut PL011Registers = 0x900_0000 as _;
 
 /// Base address of the PL031 RTC.
 const PL031_BASE_ADDRESS: *mut u32 = 0x901_0000 as _;
@@ -24,7 +25,7 @@ const GICR_BASE_ADDRESS: *mut u64 = 0x80A_0000 as _;
 
 /// The QEMU aarch64 virt platform.
 pub struct Qemu {
-    parts: Option<PlatformParts<Uart, Rtc>>,
+    parts: Option<PlatformParts<Uart<'static>, Rtc>>,
 }
 
 impl Qemu {
@@ -39,7 +40,7 @@ impl Qemu {
 }
 
 impl Platform for Qemu {
-    type Console = Uart;
+    type Console = Uart<'static>;
     type Rtc = Rtc;
 
     const RTC_IRQ: IntId = IntId::spi(2);
@@ -57,7 +58,9 @@ impl Platform for Qemu {
             // once so there are no aliases.
             parts: Some(unsafe {
                 PlatformParts {
-                    console: Uart::new(UART_BASE_ADDRESS),
+                    console: Uart::new(OwnedMmioPointer::new(
+                        NonNull::new(UART_BASE_ADDRESS).unwrap(),
+                    )),
                     rtc: Rtc::new(PL031_BASE_ADDRESS),
                     gic: GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS),
                 }
@@ -65,7 +68,7 @@ impl Platform for Qemu {
         }
     }
 
-    fn parts(&mut self) -> Option<PlatformParts<Uart, Rtc>> {
+    fn parts(&mut self) -> Option<PlatformParts<Uart<'static>, Rtc>> {
         self.parts.take()
     }
 }

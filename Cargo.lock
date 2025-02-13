@@ -21,6 +21,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "arm-pl011-uart"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75398557e07e3722f22649f7a18d0566d0affa3b82e3b9efac910b0564728256"
+dependencies = [
+ "bitflags",
+ "embedded-hal-nb",
+ "embedded-io",
+ "thiserror",
+ "zerocopy",
+]
+
+[[package]]
 name = "arm_pl031"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -66,6 +79,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "embedded-hal"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
+
+[[package]]
+name = "embedded-hal-nb"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fba4268c14288c828995299e59b12babdbe170f6c6d73731af1b4648142e8605"
+dependencies = [
+ "embedded-hal",
+ "nb",
+]
+
+[[package]]
 name = "embedded-io"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -105,6 +134,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04cbf5b083de1c7e0222a7a51dbfdba1cbe1c6ab0b15e29fff3f6c077fd9cd9f"
 
 [[package]]
+name = "nb"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d5439c4ad607c3c23abf66de8c8bf57ba8adcd1f129e699851a6e43935d339d"
+
+[[package]]
 name = "num-traits"
 version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -119,6 +154,7 @@ version = "0.1.0"
 dependencies = [
  "aarch64-paging",
  "arm-gic",
+ "arm-pl011-uart",
  "arm_pl031",
  "arrayvec",
  "bitflags",
@@ -128,7 +164,6 @@ dependencies = [
  "flat_device_tree",
  "log",
  "percore",
- "pl011-uart",
  "smccc",
  "spin",
  "virtio-drivers",
@@ -139,17 +174,6 @@ name = "percore"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37f3b91128b19c0e881596447f5e0da98ab04214b1ecdc9237f0650e64e05181"
-
-[[package]]
-name = "pl011-uart"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bcf43c7a16b82a965f77d3abf64a5fead2330ebfb1edc8f7362ec1745df487b"
-dependencies = [
- "bitflags",
- "embedded-io",
- "thiserror",
-]
 
 [[package]]
 name = "proc-macro2"
