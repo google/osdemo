@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::platform::{Platform, PlatformImpl};
-use arm_gic::gicv3::{GicV3, Trigger};
+use arm_gic::gicv3::{GicV3, IntId, Trigger};
 use arm_pl031::Rtc;
 use chrono::Duration;
 use core::sync::atomic::{AtomicBool, Ordering};
@@ -21,7 +21,7 @@ pub fn irq_setup(gic: &mut GicV3) {
 }
 
 /// Handles an RTC IRQ.
-pub fn irq_handle() {
+pub fn irq_handle(_intid: IntId) {
     info!("RTC alarm");
     ALARM_FIRED.store(true, Ordering::SeqCst);
 }

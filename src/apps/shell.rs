@@ -5,13 +5,10 @@
 use crate::{
     apps::alarm,
     devices::Devices,
-    exceptions::set_irq_handler,
+    exceptions::{remove_irq_handler, set_irq_handler},
     platform::{Platform, PlatformImpl},
 };
-use arm_gic::{
-    gicv3::{GicV3, IntId},
-    irq_enable,
-};
+use arm_gic::{gicv3::GicV3, irq_enable};
 use arm_pl031::Rtc;
 use arrayvec::ArrayVec;
 use core::str;
@@ -42,7 +39,7 @@ pub fn main(
     info!("Configuring IRQs...");
     GicV3::set_priority_mask(0xff);
     alarm::irq_setup(gic);
-    set_irq_handler(Some(&irq_handler));
+    set_irq_handler(PlatformImpl::RTC_IRQ, &alarm::irq_handle);
     irq_enable();
 
     loop {
@@ -73,7 +70,7 @@ pub fn main(
             }
         }
     }
-    set_irq_handler(None);
+    remove_irq_handler(PlatformImpl::RTC_IRQ);
 }
 
 fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<u8, 128> {
@@ -97,17 +94,6 @@ fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<u8, 128> {
                     line.push(c);
                 }
             }
-        }
-    }
-}
-
-fn irq_handler(intid: IntId) {
-    match intid {
-        PlatformImpl::RTC_IRQ => {
-            alarm::irq_handle();
-        }
-        _ => {
-            panic!("Unexpected IRQ {:?}", intid);
         }
     }
 }
