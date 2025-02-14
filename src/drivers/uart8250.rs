@@ -6,7 +6,10 @@
 //! provided by crosvm, and won't work with real hardware.
 
 use crate::console::{Console, InterruptRead};
-use arm_gic::gicv3::IntId;
+use arm_gic::{
+    gicv3::{GicV3, IntId},
+    wfi,
+};
 use core::convert::Infallible;
 use core::fmt;
 use embedded_io::{ErrorType, Read, ReadExactError, ReadReady, Write, WriteReady};
@@ -30,9 +33,9 @@ impl Uart {
     }
 
     /// Writes a single byte to the UART.
-    pub fn write_byte(&self, byte: u8) {
+    pub fn write_byte(&mut self, byte: u8) {
         // SAFETY: We were promised when `new` was called that the base address points to the
-        // control registers of an UART device which is appropriately mapped and not aliased.
+        // control registers of a UART device which is appropriately mapped and not aliased.
         unsafe {
             self.base_address.write_volatile(byte);
         }
@@ -40,7 +43,7 @@ impl Uart {
 
     pub fn lsr(&self) -> u8 {
         // SAFETY: We were promised when `new` was called that the base address points to the
-        // control registers of an UART device which is appropriately mapped and not aliased.
+        // control registers of a UART device which is appropriately mapped and not aliased.
         unsafe { self.base_address.add(5).read_volatile() }
     }
 
@@ -55,13 +58,22 @@ impl Uart {
 
     /// Reads a single byte from the UART if one is available, or returns None if no data is
     /// currently available to read.
-    pub fn read_byte(&self) -> Option<u8> {
+    pub fn read_byte(&mut self) -> Option<u8> {
+        // SAFETY: We were promised when `new` was called that the base address points to the
+        // control registers of a UART device which is appropriately mapped and not aliased.
         if self.data_ready() {
             // SAFETY: We were promised when `new` was called that the base address points to the
-            // control registers of an UART device which is appropriately mapped and not aliased.
+            // control registers of a UART device which is appropriately mapped and not aliased.
             Some(unsafe { self.base_address.read_volatile() })
         } else {
             None
+        }
+    }
+
+    /// Enables the given interrupts.
+    pub fn enable_interrupts(&mut self, interrupts: u8) {
+        unsafe {
+            self.base_address.add(1).write_volatile(interrupts);
         }
     }
 }
@@ -125,10 +137,15 @@ impl ReadReady for Uart {
 }
 
 impl InterruptRead for Uart {
-    fn handle_irq(&mut self, _intid: IntId) {}
+    fn handle_irq(&mut self, intid: IntId) {
+        GicV3::end_interrupt(intid);
+    }
 
     fn read_char(console: &mut Console<Self>) -> Result<u8, ReadExactError<Self::Error>> {
         let mut c = [0];
+        while !console.read_ready()? {
+            wfi();
+        }
         console.read_exact(&mut c)?;
         Ok(c[0])
     }
