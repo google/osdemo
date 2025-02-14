@@ -23,13 +23,14 @@ dependencies = [
 
 [[package]]
 name = "arm-pl011-uart"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75398557e07e3722f22649f7a18d0566d0affa3b82e3b9efac910b0564728256"
+checksum = "4fc2d83c175765fcbec10238b309ebe937247e938d3a9efcb32a96e69502a04e"
 dependencies = [
  "bitflags",
  "embedded-hal-nb",
  "embedded-io",
+ "safe-mmio",
  "thiserror",
  "zerocopy",
 ]
@@ -193,6 +194,12 @@ checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "safe-mmio"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30075950f15d2083592cdb9b5b175d48d332dacdc481c17546910e0c1e9cc4b1"
 
 [[package]]
 name = "scopeguard"

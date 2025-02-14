@@ -3,9 +3,13 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use super::{Platform, PlatformParts};
-use crate::pagetable::{InitialIdmap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
-use arm_gic::{gicv3::GicV3, IntId};
-use arm_pl011_uart::{OwnedMmioPointer, PL011Registers, Uart};
+use crate::{
+    console::Console,
+    exceptions::set_irq_handler,
+    pagetable::{InitialIdmap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
+};
+use arm_gic::{gicv3::GicV3, IntId, Trigger};
+use arm_pl011_uart::{Interrupts, OwnedMmioPointer, PL011Registers, Uart};
 use arm_pl031::Rtc;
 use core::ptr::NonNull;
 use log::error;
@@ -29,6 +33,8 @@ pub struct Qemu {
 }
 
 impl Qemu {
+    const CONSOLE_IRQ: IntId = IntId::spi(1);
+
     /// Returns the initial hard-coded page table to use before the Rust code starts.
     pub const fn initial_idmap() -> InitialIdmap {
         let mut idmap = [0; 512];
@@ -53,14 +59,18 @@ impl Platform for Qemu {
     }
 
     unsafe fn create() -> Self {
+        let mut uart = Uart::new(
+            // SAFETY: UART_BASE_ADDRESS is valid and mapped, and `create` is only called once so
+            // there are no aliases
+            unsafe { OwnedMmioPointer::new(NonNull::new(UART_BASE_ADDRESS).unwrap()) },
+        );
+        uart.set_interrupt_masks(Interrupts::RXI);
         Self {
             // SAFETY: The various base addresses are valid and mapped, and `create` is only called
             // once so there are no aliases.
             parts: Some(unsafe {
                 PlatformParts {
-                    console: Uart::new(OwnedMmioPointer::new(
-                        NonNull::new(UART_BASE_ADDRESS).unwrap(),
-                    )),
+                    console: uart,
                     rtc: Rtc::new(PL031_BASE_ADDRESS),
                     gic: GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS, 1, 0),
                 }
@@ -70,5 +80,12 @@ impl Platform for Qemu {
 
     fn parts(&mut self) -> Option<PlatformParts<Uart<'static>, Rtc>> {
         self.parts.take()
+    }
+
+    fn setup_gic(gic: &mut GicV3) {
+        gic.set_interrupt_priority(Self::CONSOLE_IRQ, None, 0x80);
+        gic.set_trigger(Self::CONSOLE_IRQ, None, Trigger::Level);
+        gic.enable_interrupt(Self::CONSOLE_IRQ, None, true);
+        set_irq_handler(Self::CONSOLE_IRQ, &Console::<Uart>::handle_irq);
     }
 }
