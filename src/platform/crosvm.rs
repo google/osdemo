@@ -50,7 +50,7 @@ impl Platform for Crosvm {
     type Console = Uart;
     type Rtc = Rtc;
 
-    const RTC_IRQ: IntId = IntId::spi(2);
+    const RTC_IRQ: IntId = IntId::spi(1);
 
     fn power_off() -> ! {
         system_off::<Hvc>().unwrap();
