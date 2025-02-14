@@ -38,6 +38,8 @@ pub trait Platform {
     /// This should return `Some` the first time it is called, but may return `None` on subsequent
     /// calls.
     fn parts(&mut self) -> Option<PlatformParts<Self::Console, Self::Rtc>>;
+
+    fn setup_gic(_gic: &mut GicV3) {}
 }
 
 /// The drivers provided by each platform.

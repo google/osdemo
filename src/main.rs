@@ -72,6 +72,7 @@ extern "C" fn main(fdt_address: *const u8) {
 
     info!("Initialising GIC...");
     parts.gic.setup();
+    PlatformImpl::setup_gic(&mut parts.gic);
 
     info!("Initialising page table...");
     let mut page_allocator = Heap::new();

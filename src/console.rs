@@ -3,8 +3,9 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
+use arm_gic::gicv3::IntId;
 use core::panic::PanicInfo;
-use embedded_io::{ErrorType, Read, ReadReady, Write};
+use embedded_io::{ErrorType, Read, ReadExactError, ReadReady, Write};
 use percore::{exception_free, ExceptionLock};
 use spin::{mutex::SpinMutex, Once};
 
@@ -82,6 +83,32 @@ impl<T: ErrorType + ReadReady + Send + 'static> ReadReady for Console<T> {
     fn read_ready(&mut self) -> Result<bool, Self::Error> {
         exception_free(|token| self.shared.console.borrow(token).lock().read_ready())
     }
+}
+
+impl<T: Send + InterruptRead> Console<T> {
+    /// Reads a single character from the UART, in an interrupt-driven way if supported.
+    pub fn read_char(&mut self) -> Result<u8, ReadExactError<T::Error>> {
+        T::read_char(self)
+    }
+
+    /// Lets the underlying UART driver handle the given interrupt.
+    pub fn handle_irq(intid: IntId) {
+        let console = CONSOLE.get().unwrap();
+        exception_free(|token| {
+            console.console.borrow(token).lock().handle_irq(intid);
+        });
+    }
+}
+
+/// Trait to read characters from a UART in an interrupt-driven way.
+pub trait InterruptRead: ErrorType + Send + Sized {
+    /// Reads a single character from the UART, in an interrupt-driven way if supported.
+    fn read_char(console: &mut Console<Self>) -> Result<u8, ReadExactError<Self::Error>>;
+
+    /// Handles the given interrupt for the UART.
+    ///
+    /// Note that this is called with the console locked, so must not try to log anything.
+    fn handle_irq(&mut self, intid: IntId);
 }
 
 /// Initialises the shared console.
