@@ -42,7 +42,7 @@ pub fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
                 } else {
                     let header =
                         NonNull::new(region.starting_address as *mut VirtIOHeader).unwrap();
-                    match unsafe { MmioTransport::new(header) } {
+                    match unsafe { MmioTransport::new(header, region_size) } {
                         Err(MmioError::ZeroDeviceId) => {
                             debug!("Ignoring VirtIO device with zero device ID.");
                         }
