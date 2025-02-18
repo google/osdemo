@@ -59,8 +59,6 @@ impl Uart {
     /// Reads a single byte from the UART if one is available, or returns None if no data is
     /// currently available to read.
     pub fn read_byte(&mut self) -> Option<u8> {
-        // SAFETY: We were promised when `new` was called that the base address points to the
-        // control registers of a UART device which is appropriately mapped and not aliased.
         if self.data_ready() {
             // SAFETY: We were promised when `new` was called that the base address points to the
             // control registers of a UART device which is appropriately mapped and not aliased.
