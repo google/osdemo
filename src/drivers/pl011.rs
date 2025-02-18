@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::console::{Console, InterruptRead};
-use arm_gic::gicv3::IntId;
+use arm_gic::IntId;
 use arm_pl011_uart::Uart;
 use embedded_io::{Read, ReadExactError};
 

@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
-use arm_gic::gicv3::IntId;
+use arm_gic::IntId;
 use core::panic::PanicInfo;
 use embedded_io::{ErrorType, Read, ReadExactError, ReadReady, Write};
 use percore::{exception_free, ExceptionLock};

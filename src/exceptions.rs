@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use alloc::collections::btree_map::BTreeMap;
-use arm_gic::gicv3::{GicV3, IntId};
+use arm_gic::{gicv3::GicV3, IntId};
 use core::arch::asm;
 use log::trace;
 use percore::{exception_free, ExceptionLock};

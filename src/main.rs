@@ -71,7 +71,7 @@ extern "C" fn main(fdt_address: *const u8) {
     );
 
     info!("Initialising GIC...");
-    parts.gic.setup();
+    parts.gic.setup(0);
     PlatformImpl::setup_gic(&mut parts.gic);
 
     info!("Initialising page table...");

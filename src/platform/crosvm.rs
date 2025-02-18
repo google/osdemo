@@ -9,7 +9,7 @@ use crate::{
     exceptions::set_irq_handler,
     pagetable::{InitialIdmap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
 };
-use arm_gic::gicv3::{GicV3, IntId, Trigger};
+use arm_gic::{gicv3::GicV3, IntId, Trigger};
 use arm_pl031::Rtc;
 use log::error;
 use smccc::{psci::system_off, Hvc};
@@ -70,7 +70,7 @@ impl Platform for Crosvm {
                 PlatformParts {
                     console: uart,
                     rtc: Rtc::new(PL030_BASE_ADDRESS),
-                    gic: GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS),
+                    gic: GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS, 1, 0),
                 }
             }),
         }
@@ -81,9 +81,9 @@ impl Platform for Crosvm {
     }
 
     fn setup_gic(gic: &mut GicV3) {
-        gic.set_interrupt_priority(Self::CONSOLE_IRQ, 0x80);
-        gic.set_trigger(Self::CONSOLE_IRQ, Trigger::Edge);
-        gic.enable_interrupt(Self::CONSOLE_IRQ, true);
+        gic.set_interrupt_priority(Self::CONSOLE_IRQ, None, 0x80);
+        gic.set_trigger(Self::CONSOLE_IRQ, None, Trigger::Edge);
+        gic.enable_interrupt(Self::CONSOLE_IRQ, None, true);
         set_irq_handler(Self::CONSOLE_IRQ, &Console::<Uart>::handle_irq);
     }
 }

@@ -4,7 +4,7 @@
 
 use super::{Platform, PlatformParts};
 use crate::pagetable::{InitialIdmap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
-use arm_gic::gicv3::{GicV3, IntId};
+use arm_gic::{gicv3::GicV3, IntId};
 use arm_pl011_uart::{OwnedMmioPointer, PL011Registers, Uart};
 use arm_pl031::Rtc;
 use core::ptr::NonNull;
@@ -62,7 +62,7 @@ impl Platform for Qemu {
                         NonNull::new(UART_BASE_ADDRESS).unwrap(),
                     )),
                     rtc: Rtc::new(PL031_BASE_ADDRESS),
-                    gic: GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS),
+                    gic: GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS, 1, 0),
                 }
             }),
         }

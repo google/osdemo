@@ -5,7 +5,7 @@
 mod crosvm;
 mod qemu;
 
-use arm_gic::gicv3::{GicV3, IntId};
+use arm_gic::{gicv3::GicV3, IntId};
 #[cfg(platform = "crosvm")]
 pub use crosvm::Crosvm as PlatformImpl;
 use embedded_io::{Read, ReadReady, Write, WriteReady};
