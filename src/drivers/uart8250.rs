@@ -5,11 +5,11 @@
 //! Minimal driver for an 8250 UART. This only implements enough to work with the emulated 8250
 //! provided by crosvm, and won't work with real hardware.
 
-use crate::console::{Console, InterruptRead};
+use crate::console::InterruptRead;
 use arm_gic::{gicv3::GicV3, wfi, IntId};
 use core::convert::Infallible;
 use core::fmt;
-use embedded_io::{ErrorType, Read, ReadExactError, ReadReady, Write, WriteReady};
+use embedded_io::{ErrorType, Read, ReadReady, Write, WriteReady};
 
 /// Minimal driver for an 8250 UART. This only implements enough to work with the emulated 8250
 /// provided by crosvm, and won't work with real hardware.
@@ -136,12 +136,7 @@ impl InterruptRead for Uart {
         GicV3::end_interrupt(intid);
     }
 
-    fn read_char(console: &mut Console<Self>) -> Result<u8, ReadExactError<Self::Error>> {
-        let mut c = [0];
-        while !console.read_ready()? {
-            wfi();
-        }
-        console.read_exact(&mut c)?;
-        Ok(c[0])
+    fn wait_for_irq() {
+        wfi();
     }
 }

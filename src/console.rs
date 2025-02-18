@@ -5,7 +5,7 @@
 use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
 use arm_gic::IntId;
 use core::panic::PanicInfo;
-use embedded_io::{ErrorType, Read, ReadExactError, ReadReady, Write};
+use embedded_io::{ErrorType, Read, ReadReady, Write};
 use percore::{exception_free, ExceptionLock};
 use spin::{mutex::SpinMutex, Once};
 
@@ -61,7 +61,7 @@ impl<T: ErrorType + Send + 'static> ErrorType for Console<T> {
     type Error = T::Error;
 }
 
-impl<T: ErrorType + Read + ReadReady + Send + 'static> Read for Console<T> {
+impl<T: ErrorType + InterruptRead + Read + ReadReady + Send + 'static> Read for Console<T> {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, Self::Error> {
         // Wait until the console has some data to read, without holding the lock and keeping
         // exceptions masked the whole time.
@@ -75,6 +75,7 @@ impl<T: ErrorType + Read + ReadReady + Send + 'static> Read for Console<T> {
             })? {
                 break Ok(result);
             }
+            T::wait_for_irq();
         }
     }
 }
@@ -86,11 +87,6 @@ impl<T: ErrorType + ReadReady + Send + 'static> ReadReady for Console<T> {
 }
 
 impl<T: Send + InterruptRead> Console<T> {
-    /// Reads a single character from the UART, in an interrupt-driven way if supported.
-    pub fn read_char(&mut self) -> Result<u8, ReadExactError<T::Error>> {
-        T::read_char(self)
-    }
-
     /// Lets the underlying UART driver handle the given interrupt.
     pub fn handle_irq(intid: IntId) {
         let console = CONSOLE.get().unwrap();
@@ -101,9 +97,9 @@ impl<T: Send + InterruptRead> Console<T> {
 }
 
 /// Trait to read characters from a UART in an interrupt-driven way.
-pub trait InterruptRead: ErrorType + Send + Sized {
-    /// Reads a single character from the UART, in an interrupt-driven way if supported.
-    fn read_char(console: &mut Console<Self>) -> Result<u8, ReadExactError<Self::Error>>;
+pub trait InterruptRead {
+    /// Waits for an IRQ. May return early.
+    fn wait_for_irq();
 
     /// Handles the given interrupt for the UART.
     ///

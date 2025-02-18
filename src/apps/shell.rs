@@ -4,7 +4,6 @@
 
 use crate::{
     apps::alarm,
-    console::{Console, InterruptRead},
     devices::Devices,
     exceptions::{remove_irq_handler, set_irq_handler},
     platform::{Platform, PlatformImpl},
@@ -31,7 +30,7 @@ use virtio_drivers::{
 const EOF: u8 = 0x04;
 
 pub fn main(
-    console: &mut Console<impl Write + Read + ReadReady + InterruptRead>,
+    console: &mut (impl Write + Read + ReadReady),
     gic: &mut GicV3,
     pci_roots: &mut [PciRoot<MmioCam>],
     devices: &mut Devices,
@@ -74,11 +73,12 @@ pub fn main(
     remove_irq_handler(PlatformImpl::RTC_IRQ);
 }
 
-fn read_line(console: &mut Console<impl Write + InterruptRead>) -> ArrayVec<u8, 128> {
+fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<u8, 128> {
     let mut line: ArrayVec<u8, 128> = ArrayVec::new();
     loop {
-        let c = console.read_char().unwrap();
-        match c {
+        let mut c = [0];
+        console.read_exact(&mut c).unwrap();
+        match c[0] {
             b'\r' | b'\n' => {
                 console.write_all(b"\r\n").unwrap();
                 return line;
