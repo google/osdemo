@@ -97,11 +97,13 @@ extern "C" fn main(fdt_address: *const u8) {
     }
 
     let mut devices = Devices::new(parts.rtc);
-    find_virtio_mmio_devices(&fdt, &mut devices);
+    // SAFETY: We only call this once, and we trust that the FDT is correct and the platform has
+    // mapped all MMIO regions appropriately.
+    unsafe { find_virtio_mmio_devices(&fdt, &mut devices) };
 
-    // SAFETY: We only call this once, and `map_fdt_regions` mapped the MMIO regions.
     let mut pci_roots = pci_roots_info
         .into_iter()
+        // SAFETY: We only call this once, and `map_fdt_regions` mapped the MMIO regions.
         .map(|pci_root_info| unsafe { pci_root_info.init_pci() })
         .collect::<Vec<_>>();
 

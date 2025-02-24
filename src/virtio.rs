@@ -26,7 +26,11 @@ use virtio_drivers::{
 
 const VIRTIO_MMIO_COMPATIBLE: &str = "virtio,mmio";
 
-pub fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
+/// # Safety
+///
+/// Any VirtIO MMIO devices in the given device tree must exist and be mapped appropriately, and
+/// must not be constructed anywhere else.
+pub unsafe fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
     for node in fdt.all_nodes() {
         if is_compatible(&node, &[VIRTIO_MMIO_COMPATIBLE]) {
             debug!("Found VirtIO MMIO device {}", node.name);
@@ -42,6 +46,8 @@ pub fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
                 } else {
                     let header =
                         NonNull::new(region.starting_address as *mut VirtIOHeader).unwrap();
+                    // SAFETY: The caller promised that the device tree is correct, VirtIO MMIO
+                    // devices are mapped, and no aliases are constructed to the MMIO region.
                     match unsafe { MmioTransport::new(header, region_size) } {
                         Err(MmioError::ZeroDeviceId) => {
                             debug!("Ignoring VirtIO device with zero device ID.");
@@ -108,6 +114,8 @@ pub fn find_virtio_pci_devices(pci_root: &mut PciRoot<MmioCam>, devices: &mut De
 #[derive(Debug)]
 pub struct VirtioHal;
 
+// SAFETY: dma_alloc and mmio_phys_to_virt always return appropriate pointers based on their
+// parameters.
 unsafe impl Hal for VirtioHal {
     fn dma_alloc(pages: usize, _direction: BufferDirection) -> (PhysAddr, NonNull<u8>) {
         assert_ne!(pages, 0);

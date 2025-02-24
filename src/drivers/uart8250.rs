@@ -67,6 +67,8 @@ impl Uart {
 
     /// Enables the given interrupts.
     pub fn enable_interrupts(&mut self, interrupts: u8) {
+        // SAFETY: We were promised when `new` was called that the base address points to the
+        // control registers of a UART device which is appropriately mapped and not aliased.
         unsafe {
             self.base_address.add(1).write_volatile(interrupts);
         }

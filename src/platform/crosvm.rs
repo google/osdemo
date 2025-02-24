@@ -60,6 +60,8 @@ impl Platform for Crosvm {
     }
 
     unsafe fn create() -> Self {
+        // SAFETY: There is a suitable UART at this base address on crosvm, and we have mapped it
+        // with an appropriate device mapping. `create` is only called once so there are no aliases.
         let mut uart = unsafe { Uart::new(UART_BASE_ADDRESS) };
         // Enable the RBR data available interrupt.
         uart.enable_interrupts(0b0001);
