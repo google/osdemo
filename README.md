@@ -16,6 +16,7 @@ And some device driver crates:
 
 - `arm-gic` for the Arm Generic Interrupt Controller.
 - `arm_pl031` for the PL031 real-time clock.
+- `arm-pl011-uart` for the PL011 UART.
 - `virtio-drivers` for various VirtIO devices.
 
 This is not an officially supported Google product.
