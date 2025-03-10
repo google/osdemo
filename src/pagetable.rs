@@ -10,6 +10,7 @@ use aarch64_paging::{
     },
     MapError, Mapping,
 };
+use aarch64_rt::initial_pagetable;
 use buddy_system_allocator::Heap;
 use core::{
     alloc::Layout,
@@ -120,13 +121,6 @@ impl IdMap {
     }
 }
 
-/// The initial hardcoded page table used before the Rust code starts and activates the main page
-/// table.
-#[unsafe(export_name = "idmap")]
-#[unsafe(link_section = ".rodata.idmap")]
-static INITIAL_IDMAP: InitialIdmap = PlatformImpl::initial_idmap();
-
-/// A hardcoded pagetable.
-#[repr(align(4096))]
-#[allow(dead_code)]
-pub struct InitialIdmap(pub [usize; 512]);
+// The initial hardcoded page table used before the Rust code starts and activates the main page
+// table.
+initial_pagetable!(PlatformImpl::initial_idmap());

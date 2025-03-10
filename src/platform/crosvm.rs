@@ -7,8 +7,9 @@ use crate::{
     console::Console,
     drivers::uart8250::Uart,
     exceptions::set_irq_handler,
-    pagetable::{InitialIdmap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
+    pagetable::{DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
 };
+use aarch64_rt::InitialPagetable;
 use arm_gic::{gicv3::GicV3, IntId, Trigger};
 use arm_pl031::Rtc;
 use log::error;
@@ -34,7 +35,7 @@ impl Crosvm {
     const CONSOLE_IRQ: IntId = IntId::spi(0);
 
     /// Returns the initial hard-coded page table to use before the Rust code starts.
-    pub const fn initial_idmap() -> InitialIdmap {
+    pub const fn initial_idmap() -> InitialPagetable {
         let mut idmap = [0; 512];
         // 1 GiB of device mappings.
         idmap[0] = DEVICE_ATTRIBUTES.bits();
@@ -42,7 +43,7 @@ impl Crosvm {
         idmap[1] = DEVICE_ATTRIBUTES.bits() | 0x40000000;
         // 1 GiB of DRAM.
         idmap[2] = MEMORY_ATTRIBUTES.bits() | 0x80000000;
-        InitialIdmap(idmap)
+        InitialPagetable(idmap)
     }
 }
 

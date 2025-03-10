@@ -10,7 +10,6 @@
 extern crate alloc;
 
 mod apps;
-mod asm;
 mod console;
 pub mod devices;
 pub mod drivers;

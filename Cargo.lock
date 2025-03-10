@@ -12,6 +12,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aarch64-rt"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b9f0784da9bdee1e73506f9cd9e5bb9fc3d2e37745d03c41a8238c4b66f9966"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "arm-gic"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -70,6 +79,12 @@ checksum = "a1a0108968a3a2dab95b089c0fc3f1afa7759aa5ebe6f1d86d206d6f7ba726eb"
 dependencies = [
  "spin",
 ]
+
+[[package]]
+name = "cfg-if"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
@@ -155,6 +170,7 @@ name = "osdemo"
 version = "0.1.0"
 dependencies = [
  "aarch64-paging",
+ "aarch64-rt",
  "arm-gic",
  "arm-pl011-uart",
  "arm_pl031",
