@@ -10,7 +10,7 @@ use crate::{
 };
 use aarch64_rt::InitialPagetable;
 use arm_gic::{gicv3::GicV3, IntId, Trigger};
-use arm_pl011_uart::{Interrupts, OwnedMmioPointer, PL011Registers, Uart};
+use arm_pl011_uart::{Interrupts, PL011Registers, Uart, UniqueMmioPointer};
 use arm_pl031::Rtc;
 use core::ptr::NonNull;
 use log::error;
@@ -63,7 +63,7 @@ impl Platform for Qemu {
         let mut uart = Uart::new(
             // SAFETY: UART_BASE_ADDRESS is valid and mapped, and `create` is only called once so
             // there are no aliases
-            unsafe { OwnedMmioPointer::new(NonNull::new(UART_BASE_ADDRESS).unwrap()) },
+            unsafe { UniqueMmioPointer::new(NonNull::new(UART_BASE_ADDRESS).unwrap()) },
         );
         uart.set_interrupt_masks(Interrupts::RXI);
         Self {
