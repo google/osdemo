@@ -11,10 +11,14 @@ use crate::{
 use arm_gic::{gicv3::GicV3, irq_enable};
 use arm_pl031::Rtc;
 use arrayvec::ArrayVec;
-use core::str;
+use core::{arch::asm, str};
 use embedded_io::{Read, ReadReady, Write};
 use flat_device_tree::Fdt;
 use log::info;
+use smccc::{
+    psci::{self, LowestAffinityLevel},
+    Hvc,
+};
 use virtio_drivers::{
     device::socket::{DisconnectReason, VsockAddr, VsockConnectionManager, VsockEventType},
     transport::{
@@ -65,6 +69,7 @@ pub fn main(
             "lsdev" => lsdev(console, devices),
             "lspci" => lspci(console, pci_roots),
             "vcat" => vcat(console, parts, &mut devices.vsock),
+            "cpus" => cpus(console, fdt),
             _ => {
                 writeln!(console, "Unrecognised command.").unwrap();
             }
@@ -114,6 +119,7 @@ fn help(console: &mut (impl Write + Read)) {
         "  alarm - Sets an alarm for 5 seconds in the future"
     )
     .unwrap();
+    writeln!(console, "  cpus - Lists the state of all CPUs").unwrap();
     writeln!(console, "  date - Prints the current date and time").unwrap();
     writeln!(console, "  dtdump - Dumps the device tree to the console").unwrap();
     writeln!(
@@ -188,6 +194,39 @@ fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot<MmioCam>]) {
                 }
             }
         }
+    }
+}
+
+fn cpus(console: &mut impl Write, fdt: &Fdt) {
+    let mpidr = read_mpidr_el1();
+    let uniprocessor = mpidr & (1 << 30) != 0;
+    let multithreading = mpidr & (1 << 24) != 0;
+    let current_cpu = mpidr & 0xff00ffffff;
+    writeln!(
+        console,
+        "MPIDR {:#012x}: uniprocessor {}, multithreading {}",
+        mpidr, uniprocessor, multithreading
+    );
+    writeln!(
+        console,
+        "Current CPU {:#012x} affinity state {:?}",
+        current_cpu,
+        psci::affinity_info::<Hvc>(current_cpu, LowestAffinityLevel::All).unwrap(),
+    )
+    .unwrap();
+
+    for (i, cpu) in fdt.cpus().enumerate() {
+        let id = cpu.ids().unwrap().first().unwrap() as u64;
+        writeln!(console, "CPU {}: ID {:#012x}", i, id).unwrap();
+        writeln!(
+            console,
+            "  affinity state {:?} {:?} {:?} {:?}",
+            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap(),
+            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Ignored).unwrap(),
+            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Aff1Ignored).unwrap(),
+            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Aff1Aff2Ignored).unwrap(),
+        )
+        .unwrap();
     }
 }
 
@@ -268,4 +307,17 @@ fn vcat<'a, H: Hal, T: Transport>(
             }
         }
     }
+}
+
+fn read_mpidr_el1() -> u64 {
+    let value;
+    // SAFETY: Reading the MPIDR is always safe.
+    unsafe {
+        asm!(
+            "mrs {value}, mpidr_el1",
+            options(nostack),
+            value = out(reg) value,
+        );
+    }
+    value
 }

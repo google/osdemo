@@ -36,7 +36,7 @@ crosvm: $(CROSVM_BIN)
 
 qemu: $(QEMU_BIN)
 	qemu-system-aarch64 -machine virt,gic-version=3 -cpu max -display none -kernel $< -s \
-	  -serial mon:stdio \
+	  -smp 4 -serial mon:stdio \
 	  -global virtio-mmio.force-legacy=false \
 	  -drive file=/dev/null,if=none,format=raw,id=x0 \
 	  -device virtio-blk-device,drive=x0 \
