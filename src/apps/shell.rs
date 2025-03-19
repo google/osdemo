@@ -198,6 +198,8 @@ fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot<MmioCam>]) {
 }
 
 fn cpus(console: &mut impl Write, fdt: &Fdt) {
+    writeln!(console, "PSCI version {}", psci::version::<Hvc>().unwrap()).unwrap();
+
     let mpidr = read_mpidr_el1();
     let uniprocessor = mpidr & (1 << 30) != 0;
     let multithreading = mpidr & (1 << 24) != 0;
