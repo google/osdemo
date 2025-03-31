@@ -14,9 +14,9 @@ dependencies = [
 
 [[package]]
 name = "aarch64-rt"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b9f0784da9bdee1e73506f9cd9e5bb9fc3d2e37745d03c41a8238c4b66f9966"
+checksum = "32e14111f042299afd1960bf338ece94e69322015881f682693c8f55455514f9"
 dependencies = [
  "cfg-if",
 ]
