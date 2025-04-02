@@ -27,7 +27,7 @@ flat_device_tree = { version = "3.1.1", features = ["pretty-printing"] }
 log = "0.4.27"
 percore = "0.1.0"
 smccc = "0.2.0"
-spin = { version = "0.9.8", features = [
+spin = { version = "0.10.0", features = [
   "spin_mutex",
   "once",
 ], default-features = false }
