@@ -14,7 +14,7 @@ aarch64-rt = "0.1.1"
 aarch64-paging = { version = "0.8.1", default-features = false }
 arm_pl031 = "0.2.1"
 arm-gic = "0.2.2"
-arm-pl011-uart = "0.3.0"
+arm-pl011-uart = "0.3.1"
 arrayvec = { version = "0.7.6", default-features = false }
 bitflags = "2.9.0"
 buddy_system_allocator = { version = "0.11.0", default-features = false, features = [
