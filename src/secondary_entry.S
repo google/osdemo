@@ -18,5 +18,8 @@ secondary_entry:
     /* Set the stack pointer which was passed. */
     mov sp, x0
 
+    /* Load Rust entry point address and argument from the bottom of the stack. */
+    ldp x0, x1, [sp, #-16]
+
     /* Call into Rust code. */
-    b rust_secondary_entry
+    br x1

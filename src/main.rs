@@ -18,6 +18,7 @@ mod logger;
 mod pagetable;
 pub mod pci;
 mod platform;
+pub mod secondary_entry;
 mod virtio;
 
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
