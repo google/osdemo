@@ -32,7 +32,9 @@ $(QEMU_BIN): build.qemu
 crosvm: $(CROSVM_BIN)
 	adb shell 'mkdir -p /data/local/tmp/virt_raw'
 	adb push $< /data/local/tmp/virt_raw/osdemo
-	adb shell "/apex/com.android.virt/bin/crosvm --log-level=info --extended-status run --disable-sandbox --bios=/data/local/tmp/virt_raw/osdemo --rwdisk=/dev/null"
+	adb shell "/apex/com.android.virt/bin/crosvm --log-level=info --extended-status run \
+	  --disable-sandbox --bios=/data/local/tmp/virt_raw/osdemo --rwdisk=/dev/null" \
+		--cpus num-cores=4
 
 qemu: $(QEMU_BIN)
 	qemu-system-aarch64 -machine virt,gic-version=3 -cpu max -display none -kernel $< -s \
