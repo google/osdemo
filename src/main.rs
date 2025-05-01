@@ -21,6 +21,7 @@ mod platform;
 mod virtio;
 
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
+use aarch64_rt::entry;
 use alloc::vec::Vec;
 use apps::shell;
 use buddy_system_allocator::{Heap, LockedHeap};
@@ -45,8 +46,9 @@ static HEAP: SpinMutex<[u8; HEAP_SIZE]> = SpinMutex::new([0; HEAP_SIZE]);
 #[global_allocator]
 static HEAP_ALLOCATOR: LockedHeap<32> = LockedHeap::new();
 
-#[no_mangle]
-extern "C" fn main(fdt_address: *const u8) {
+entry!(main);
+fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
+    let fdt_address = x0 as *const u8;
     // SAFETY: We only call `PlatformImpl::create` here, once on boot.
     let mut platform = unsafe { PlatformImpl::create() };
     let mut parts = platform.parts().unwrap();
