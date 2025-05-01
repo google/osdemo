@@ -5,7 +5,7 @@
 use crate::{
     apps::{
         alarm,
-        cpus::{cpus, start_cpus},
+        cpus::{cpus, start_cpu},
     },
     devices::Devices,
     exceptions::{remove_irq_handler, set_irq_handler},
@@ -69,7 +69,7 @@ pub fn main(
             "lspci" => lspci(console, pci_roots),
             "vcat" => vcat(console, parts, &mut devices.vsock),
             "cpus" => cpus(console, fdt),
-            "start_cpus" => start_cpus(console, fdt),
+            "start_cpu" => start_cpu(console, fdt, parts),
             _ => {
                 writeln!(console, "Unrecognised command.").unwrap();
             }
@@ -130,7 +130,7 @@ fn help(console: &mut (impl Write + Read)) {
     writeln!(console, "  help - Prints this help").unwrap();
     writeln!(console, "  lsdev - Lists devices").unwrap();
     writeln!(console, "  lspci - Lists devices on the PCI bus").unwrap();
-    writeln!(console, "  start_cpus - Start secondary CPUs").unwrap();
+    writeln!(console, "  start_cpu - Starts a secondary CPU").unwrap();
     writeln!(console, "  vcat - Communicates with a vsock port").unwrap();
 }
 

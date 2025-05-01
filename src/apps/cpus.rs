@@ -46,19 +46,32 @@ impl Default for SecondaryStack {
 // It's just a memory allocation, there's nothing CPU-specific about it.
 unsafe impl Send for SecondaryStack {}
 
-pub fn start_cpus(console: &mut impl Write, fdt: &Fdt) {
-    for (i, cpu) in fdt.cpus().enumerate() {
-        let id = cpu.ids().unwrap().first().unwrap() as u64;
-        writeln!(console, "CPU {}: ID {:#012x}", i, id).unwrap();
-        let state = psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap();
-        if state == AffinityState::Off {
-            let stack = get_secondary_stack_end(i);
-            writeln!(console, " Starting with stack {:?}", stack).unwrap();
-            let result = psci::cpu_on::<Hvc>(id, secondary_entry as _, stack as _);
-            writeln!(console, " => {:?}", result).unwrap();
-        } else {
-            writeln!(console, " already {:?}", state).unwrap();
-        }
+pub fn start_cpu<'a>(console: &mut impl Write, fdt: &Fdt, mut args: impl Iterator<Item = &'a str>) {
+    let Some(cpu_index) = args.next() else {
+        writeln!(console, "Usage:").unwrap();
+        writeln!(console, "  start_cpu <cpu_index>").unwrap();
+        return;
+    };
+    let Ok(cpu_index) = cpu_index.parse() else {
+        writeln!(console, "Invalid cpu_index").unwrap();
+        return;
+    };
+
+    let Some(cpu) = fdt.cpus().nth(cpu_index) else {
+        writeln!(console, "cpu_index out of bounds").unwrap();
+        return;
+    };
+
+    let id = cpu.ids().unwrap().first().unwrap() as u64;
+    writeln!(console, "CPU {}: ID {:#012x}", cpu_index, id).unwrap();
+    let state = psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap();
+    if state == AffinityState::Off {
+        let stack = get_secondary_stack_end(cpu_index);
+        writeln!(console, " Starting with stack {:?}", stack).unwrap();
+        let result = psci::cpu_on::<Hvc>(id, secondary_entry as _, stack as _);
+        writeln!(console, " => {:?}", result).unwrap();
+    } else {
+        writeln!(console, " already {:?}", state).unwrap();
     }
 }
 
