@@ -1,0 +1,60 @@
+// Copyright 2025 Google LLC.
+// This project is dual-licensed under Apache 2.0 and MIT terms.
+// See LICENSE-APACHE and LICENSE-MIT for details.
+
+use core::arch::asm;
+use embedded_io::Write;
+use flat_device_tree::Fdt;
+use smccc::{
+    psci::{self, LowestAffinityLevel},
+    Hvc,
+};
+
+pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
+    writeln!(console, "PSCI version {}", psci::version::<Hvc>().unwrap()).unwrap();
+
+    let mpidr = read_mpidr_el1();
+    let uniprocessor = mpidr & (1 << 30) != 0;
+    let multithreading = mpidr & (1 << 24) != 0;
+    let current_cpu = mpidr & 0xff00ffffff;
+    writeln!(
+        console,
+        "MPIDR {:#012x}: uniprocessor {}, multithreading {}",
+        mpidr, uniprocessor, multithreading
+    )
+    .unwrap();
+    writeln!(
+        console,
+        "Current CPU {:#012x} affinity state {:?}",
+        current_cpu,
+        psci::affinity_info::<Hvc>(current_cpu, LowestAffinityLevel::All).unwrap(),
+    )
+    .unwrap();
+
+    for (i, cpu) in fdt.cpus().enumerate() {
+        let id = cpu.ids().unwrap().first().unwrap() as u64;
+        writeln!(console, "CPU {}: ID {:#012x}", i, id).unwrap();
+        writeln!(
+            console,
+            "  affinity state {:?} {:?} {:?} {:?}",
+            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap(),
+            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Ignored).unwrap(),
+            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Aff1Ignored).unwrap(),
+            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Aff1Aff2Ignored).unwrap(),
+        )
+        .unwrap();
+    }
+}
+
+fn read_mpidr_el1() -> u64 {
+    let value;
+    // SAFETY: Reading the MPIDR is always safe.
+    unsafe {
+        asm!(
+            "mrs {value}, mpidr_el1",
+            options(nostack),
+            value = out(reg) value,
+        );
+    }
+    value
+}
