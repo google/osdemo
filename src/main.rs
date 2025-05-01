@@ -40,7 +40,7 @@ const LOG_LEVEL: LevelFilter = LevelFilter::Info;
 const PAGE_HEAP_SIZE: usize = 10 * PAGE_SIZE;
 static PAGE_HEAP: SpinMutex<[u8; PAGE_HEAP_SIZE]> = SpinMutex::new([0; PAGE_HEAP_SIZE]);
 
-const HEAP_SIZE: usize = 20 * PAGE_SIZE;
+const HEAP_SIZE: usize = 40 * PAGE_SIZE;
 static HEAP: SpinMutex<[u8; HEAP_SIZE]> = SpinMutex::new([0; HEAP_SIZE]);
 
 #[global_allocator]

@@ -2,13 +2,79 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use core::arch::asm;
+use aarch64_rt::Stack;
+use alloc::{boxed::Box, collections::btree_map::BTreeMap};
+use core::arch::{asm, global_asm};
 use embedded_io::Write;
 use flat_device_tree::Fdt;
+use log::error;
 use smccc::{
-    psci::{self, LowestAffinityLevel},
+    psci::{self, AffinityState, LowestAffinityLevel},
     Hvc,
 };
+use spin::mutex::SpinMutex;
+
+const SECONDARY_STACK_PAGE_COUNT: usize = 4;
+
+static SECONDARY_STACKS: SpinMutex<BTreeMap<usize, SecondaryStack>> =
+    SpinMutex::new(BTreeMap::new());
+
+fn get_secondary_stack_end(cpu_index: usize) -> *mut Stack<SECONDARY_STACK_PAGE_COUNT> {
+    SECONDARY_STACKS.lock().entry(cpu_index).or_default().end()
+}
+
+#[derive(Debug)]
+struct SecondaryStack {
+    stack: *mut Stack<SECONDARY_STACK_PAGE_COUNT>,
+}
+
+impl SecondaryStack {
+    fn end(&self) -> *mut Stack<SECONDARY_STACK_PAGE_COUNT> {
+        self.stack.wrapping_add(1)
+    }
+}
+
+impl Default for SecondaryStack {
+    fn default() -> Self {
+        Self {
+            stack: Box::into_raw(Box::new(Stack::<SECONDARY_STACK_PAGE_COUNT>::new())),
+        }
+    }
+}
+
+// SAFETY: A secondary stack can be sent between CPUs; in fact it must be to start a secondary CPU.
+// It's just a memory allocation, there's nothing CPU-specific about it.
+unsafe impl Send for SecondaryStack {}
+
+pub fn start_cpus(console: &mut impl Write, fdt: &Fdt) {
+    for (i, cpu) in fdt.cpus().enumerate() {
+        let id = cpu.ids().unwrap().first().unwrap() as u64;
+        writeln!(console, "CPU {}: ID {:#012x}", i, id).unwrap();
+        let state = psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap();
+        if state == AffinityState::Off {
+            let stack = get_secondary_stack_end(i);
+            writeln!(console, " Starting with stack {:?}", stack).unwrap();
+            let result = psci::cpu_on::<Hvc>(id, secondary_entry as _, stack as _);
+            writeln!(console, " => {:?}", result).unwrap();
+        } else {
+            writeln!(console, " already {:?}", state).unwrap();
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+extern "C" fn rust_secondary_entry() -> ! {
+    //info!("Secondary CPU started");
+    psci::cpu_off::<Hvc>().unwrap();
+    error!("PSCI_CPU_OFF returned unexpectedly");
+    #[allow(clippy::empty_loop)]
+    loop {}
+}
+
+unsafe extern "C" {
+    unsafe fn secondary_entry() -> !;
+}
+global_asm!(include_str!("../secondary_entry.S"));
 
 pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
     writeln!(console, "PSCI version {}", psci::version::<Hvc>().unwrap()).unwrap();
