@@ -70,6 +70,7 @@ pub fn main(
             "vcat" => vcat(console, parts, &mut devices.vsock),
             "cpus" => cpus(console, fdt),
             "start_cpu" => start_cpu(console, fdt, parts),
+            "" => {}
             _ => {
                 writeln!(console, "Unrecognised command.").unwrap();
             }
