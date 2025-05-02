@@ -112,11 +112,7 @@ fn dtdump(console: &mut impl Write, fdt: &Fdt) {
 
 fn help(console: &mut (impl Write + Read)) {
     writeln!(console, "Commands:").unwrap();
-    writeln!(
-        console,
-        "  alarm - Sets an alarm for 5 seconds in the future"
-    )
-    .unwrap();
+    writeln!(console, "  alarm - Sets an alarm in the future").unwrap();
     writeln!(console, "  cpus - Lists the state of all CPUs").unwrap();
     writeln!(console, "  date - Prints the current date and time").unwrap();
     writeln!(console, "  dtdump - Dumps the device tree to the console").unwrap();
