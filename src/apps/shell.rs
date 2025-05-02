@@ -8,8 +8,6 @@ use crate::{
         cpus::{cpus, start_cpu},
     },
     devices::Devices,
-    exceptions::{remove_irq_handler, set_irq_handler},
-    platform::{Platform, PlatformImpl},
 };
 use arm_gic::{gicv3::GicV3, irq_enable};
 use arm_pl031::Rtc;
@@ -42,7 +40,6 @@ pub fn main(
     info!("Configuring IRQs...");
     GicV3::set_priority_mask(0xff);
     alarm::irq_setup(gic);
-    set_irq_handler(PlatformImpl::RTC_IRQ, &alarm::irq_handle);
     irq_enable();
 
     loop {
@@ -76,7 +73,7 @@ pub fn main(
             }
         }
     }
-    remove_irq_handler(PlatformImpl::RTC_IRQ);
+    alarm::irq_remove();
 }
 
 fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<u8, 128> {

@@ -2,7 +2,10 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::platform::{Platform, PlatformImpl};
+use crate::{
+    exceptions::{remove_irq_handler, set_irq_handler},
+    platform::{Platform, PlatformImpl},
+};
 use arm_gic::{gicv3::GicV3, IntId, Trigger};
 use arm_pl031::Rtc;
 use chrono::Duration;
@@ -15,13 +18,19 @@ static ALARM_FIRED: AtomicBool = AtomicBool::new(false);
 
 /// Configures the RTC IRQ.
 pub fn irq_setup(gic: &mut GicV3) {
+    set_irq_handler(PlatformImpl::RTC_IRQ, &irq_handle);
     gic.set_interrupt_priority(PlatformImpl::RTC_IRQ, None, 0x80);
     gic.set_trigger(PlatformImpl::RTC_IRQ, None, Trigger::Level);
     gic.enable_interrupt(PlatformImpl::RTC_IRQ, None, true);
 }
 
+/// Removes our RTC IRQ handler.
+pub fn irq_remove() {
+    remove_irq_handler(PlatformImpl::RTC_IRQ);
+}
+
 /// Handles an RTC IRQ.
-pub fn irq_handle(_intid: IntId) {
+fn irq_handle(_intid: IntId) {
     info!("RTC alarm");
     ALARM_FIRED.store(true, Ordering::SeqCst);
 }
