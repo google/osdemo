@@ -9,7 +9,13 @@ use crate::{
     pagetable::{DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
 };
 use aarch64_rt::InitialPagetable;
-use arm_gic::{gicv3::GicV3, IntId, Trigger};
+use arm_gic::{
+    gicv3::{
+        registers::{Gicd, GicrSgi},
+        GicV3,
+    },
+    IntId, Trigger,
+};
 use arm_pl011_uart::{Interrupts, PL011Registers, Uart, UniqueMmioPointer};
 use arm_pl031::Rtc;
 use core::ptr::NonNull;
@@ -23,10 +29,10 @@ const UART_BASE_ADDRESS: *mut PL011Registers = 0x900_0000 as _;
 const PL031_BASE_ADDRESS: *mut u32 = 0x901_0000 as _;
 
 /// Base address of the GICv3 distributor.
-const GICD_BASE_ADDRESS: *mut u64 = 0x800_0000 as _;
+const GICD_BASE_ADDRESS: *mut Gicd = 0x800_0000 as _;
 
 /// Base address of the GICv3 redistributor.
-const GICR_BASE_ADDRESS: *mut u64 = 0x80A_0000 as _;
+const GICR_BASE_ADDRESS: *mut GicrSgi = 0x80A_0000 as _;
 
 /// The QEMU aarch64 virt platform.
 pub struct Qemu {
@@ -73,7 +79,7 @@ impl Platform for Qemu {
                 PlatformParts {
                     console: uart,
                     rtc: Rtc::new(PL031_BASE_ADDRESS),
-                    gic: GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS, 1, 0),
+                    gic: GicV3::new(GICD_BASE_ADDRESS, GICR_BASE_ADDRESS, 1, false),
                 }
             }),
         }
