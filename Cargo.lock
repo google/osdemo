@@ -14,11 +14,12 @@ dependencies = [
 
 [[package]]
 name = "aarch64-rt"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32e14111f042299afd1960bf338ece94e69322015881f682693c8f55455514f9"
+checksum = "88bc65baa2c14080f09023e84c6481a9b0e5265dc94f8c60b7f7d4d8efac66ab"
 dependencies = [
  "cfg-if",
+ "smccc",
 ]
 
 [[package]]
@@ -229,9 +230,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "smccc"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d28c99a9913f0686f470a6ff020e160195eb1a86f9c1800aab2b3abba4bc9b3"
+checksum = "87ed898c59fbfd740492e435cba30a08b74a68d1f1ebb5f1a4b17f6bc7782be8"
 dependencies = [
  "thiserror",
 ]
