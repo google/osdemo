@@ -2,10 +2,13 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::{pagetable::PAGETABLE, secondary_entry::start_core_with_stack};
+use crate::{
+    interrupts::GIC, mpidr_to_cpu_index, pagetable::PAGETABLE,
+    secondary_entry::start_core_with_stack,
+};
 use arm_gic::{
-    gicv3::{GicV3, SgiTarget},
-    IntId,
+    gicv3::{GicV3, Group, SgiTarget},
+    wfi, IntId,
 };
 use core::arch::asm;
 use embedded_io::Write;
@@ -60,6 +63,25 @@ extern "C" fn rust_secondary_entry(arg: u64) -> ! {
         PAGETABLE.get().unwrap().activate_secondary();
     }
     info!("Page table activated on secondary CPU.");
+    let cpu = current_cpu_index();
+    info!("Initialising GIC for CPU {}", cpu);
+    {
+        let mut gic = GIC.get().unwrap().lock();
+        gic.init_cpu(cpu);
+        for i in 0..IntId::SGI_COUNT {
+            let sgi = IntId::sgi(i);
+            gic.enable_interrupt(sgi, Some(cpu), true);
+            gic.set_interrupt_priority(sgi, Some(cpu), 0x80);
+            gic.set_group(sgi, Some(cpu), Group::Group1NS);
+        }
+    }
+    GicV3::enable_group1(true);
+    GicV3::set_priority_mask(0xff);
+    // Don't actually unmask interrupts, as we haven't registered a handler.
+    info!("Waiting for interrupt...");
+    wfi();
+    let intid = GicV3::get_and_acknowledge_interrupt().expect("No pending interrupt");
+    info!("Secondary CPU {} received interrupt {:?}.", cpu, intid);
     psci::cpu_off::<Hvc>().unwrap();
     error!("PSCI_CPU_OFF returned unexpectedly");
     #[allow(clippy::empty_loop)]
@@ -138,4 +160,9 @@ fn read_mpidr_el1() -> u64 {
         );
     }
     value
+}
+
+fn current_cpu_index() -> usize {
+    let mpidr = read_mpidr_el1();
+    mpidr_to_cpu_index(mpidr & 0xff00ffffff)
 }
