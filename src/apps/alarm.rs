@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{
-    exceptions::{remove_irq_handler, set_irq_handler},
+    interrupts::{remove_irq_handler, set_irq_handler},
     platform::{Platform, PlatformImpl},
 };
 use arm_gic::{gicv3::GicV3, IntId, Trigger};

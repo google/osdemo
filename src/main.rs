@@ -14,6 +14,7 @@ mod console;
 pub mod devices;
 pub mod drivers;
 mod exceptions;
+mod interrupts;
 mod logger;
 mod pagetable;
 pub mod pci;

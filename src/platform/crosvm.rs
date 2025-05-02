@@ -6,7 +6,7 @@ use super::{Platform, PlatformParts};
 use crate::{
     console::Console,
     drivers::uart8250::Uart,
-    exceptions::set_irq_handler,
+    interrupts::set_irq_handler,
     pagetable::{DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
 };
 use aarch64_rt::InitialPagetable;
