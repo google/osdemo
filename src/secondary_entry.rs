@@ -4,7 +4,10 @@
 
 use aarch64_rt::Stack;
 use alloc::{boxed::Box, collections::btree_map::BTreeMap};
-use core::{arch::global_asm, ops::DerefMut};
+use core::{
+    arch::{asm, global_asm},
+    ops::DerefMut,
+};
 use smccc::{psci, Hvc};
 use spin::mutex::SpinMutex;
 
@@ -68,7 +71,8 @@ unsafe fn start_core<const N: usize>(
         *params.wrapping_sub(1) = rust_entry as _;
         *params.wrapping_sub(2) = arg;
     }
-    // TODO: Cache maintenance?
+    // Wait for the stores above to complete before starting the secondary CPU core.
+    dsb_st();
 
     psci::cpu_on::<Hvc>(mpidr, secondary_entry as _, stack_end as _)
 }
@@ -95,3 +99,10 @@ unsafe extern "C" {
 }
 
 global_asm!(include_str!("secondary_entry.S"));
+
+/// Data synchronisation barrier that waits for stores to complete, for the full system.
+fn dsb_st() {
+    unsafe {
+        asm!("dsb st", options(nostack));
+    }
+}
