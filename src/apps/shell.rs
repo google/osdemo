@@ -5,7 +5,7 @@
 use crate::{
     apps::{
         alarm,
-        cpus::{cpus, start_cpu},
+        cpus::{cpus, sgi, start_cpu},
     },
     devices::Devices,
 };
@@ -62,6 +62,7 @@ pub fn main(
             "dtdump" => dtdump(console, fdt),
             "exit" => break,
             "help" => help(console),
+            "sgi" => sgi(console, parts),
             "lsdev" => lsdev(console, devices),
             "lspci" => lspci(console, pci_roots),
             "vcat" => vcat(console, parts, &mut devices.vsock),
@@ -122,6 +123,7 @@ fn help(console: &mut (impl Write + Read)) {
     )
     .unwrap();
     writeln!(console, "  help - Prints this help").unwrap();
+    writeln!(console, "  sgi - Sends a software-generated interrupt").unwrap();
     writeln!(console, "  lsdev - Lists devices").unwrap();
     writeln!(console, "  lspci - Lists devices on the PCI bus").unwrap();
     writeln!(console, "  start_cpu - Starts a secondary CPU").unwrap();

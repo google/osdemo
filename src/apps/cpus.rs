@@ -3,6 +3,10 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{pagetable::PAGETABLE, secondary_entry::start_core_with_stack};
+use arm_gic::{
+    gicv3::{GicV3, SgiTarget},
+    IntId,
+};
 use core::arch::asm;
 use embedded_io::Write;
 use flat_device_tree::Fdt;
@@ -96,6 +100,31 @@ pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
         )
         .unwrap();
     }
+}
+
+pub fn sgi<'a>(console: &mut impl Write, mut args: impl Iterator<Item = &'a str>) {
+    let Some(id) = args.next() else {
+        writeln!(console, "Usage:").unwrap();
+        writeln!(console, "  sgi <id>").unwrap();
+        return;
+    };
+    let Ok(id) = id.parse() else {
+        writeln!(console, "Invalid id").unwrap();
+        return;
+    };
+    if id >= IntId::SGI_COUNT {
+        writeln!(
+            console,
+            "Invalid SGI, must be less than {}",
+            IntId::SGI_COUNT
+        )
+        .unwrap();
+        return;
+    }
+
+    let intid = IntId::sgi(id);
+    writeln!(console, "Sending {:?} to all CPUs", intid).unwrap();
+    GicV3::send_sgi(intid, SgiTarget::All);
 }
 
 fn read_mpidr_el1() -> u64 {
