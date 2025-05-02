@@ -14,7 +14,6 @@ use aarch64_rt::initial_pagetable;
 use buddy_system_allocator::Heap;
 use core::{
     alloc::Layout,
-    arch::asm,
     ptr::{self, NonNull},
 };
 use spin::Once;
@@ -141,13 +140,11 @@ impl IdMap {
     /// using.
     pub unsafe fn activate_secondary(&'static self) {
         assert!(self.mapping.active());
+        // SAFETY: Our caller promised that the page table doesn't unmapping anything which the
+        // program needs. The static lifetime of &self ensures that the page table isn't dropped. We
+        // just checked that the table has already been marked as active.
         unsafe {
-            asm!(
-                "msr ttbr0_el1, {ttbrval}",
-                "isb",
-                ttbrval = in(reg) self.mapping.root_address().0 | (ASID << 48),
-                options(preserves_flags, nostack),
-            );
+            self.mapping.activate_raw();
         }
     }
 }
