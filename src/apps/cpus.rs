@@ -2,7 +2,7 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::secondary_entry::start_core_with_stack;
+use crate::{pagetable::PAGETABLE, secondary_entry::start_core_with_stack};
 use core::arch::asm;
 use embedded_io::Write;
 use flat_device_tree::Fdt;
@@ -50,6 +50,12 @@ pub fn start_cpu<'a>(console: &mut impl Write, fdt: &Fdt, mut args: impl Iterato
 
 extern "C" fn rust_secondary_entry(arg: u64) -> ! {
     info!("Secondary CPU started: {}", arg);
+    // SAFETY: All relevant memory was mapped before the pagetable was activated on the primary
+    // core.
+    unsafe {
+        PAGETABLE.get().unwrap().activate_secondary();
+    }
+    info!("Page table activated on secondary CPU.");
     psci::cpu_off::<Hvc>().unwrap();
     error!("PSCI_CPU_OFF returned unexpectedly");
     #[allow(clippy::empty_loop)]

@@ -14,8 +14,10 @@ use aarch64_rt::initial_pagetable;
 use buddy_system_allocator::Heap;
 use core::{
     alloc::Layout,
+    arch::asm,
     ptr::{self, NonNull},
 };
+use spin::Once;
 
 const ASID: usize = 1;
 const ROOT_LEVEL: usize = 1;
@@ -29,6 +31,8 @@ pub const MEMORY_ATTRIBUTES: Attributes = Attributes::VALID
     .union(Attributes::INNER_SHAREABLE)
     .union(Attributes::ACCESSED)
     .union(Attributes::NON_GLOBAL);
+
+pub static PAGETABLE: Once<IdMap> = Once::new();
 
 #[derive(Debug)]
 struct IdTranslation {
@@ -69,6 +73,10 @@ impl Translation for IdTranslation {
         NonNull::new(pa.0 as *mut PageTable).expect("Got physical address 0 for pagetable")
     }
 }
+
+// SAFETY: An `&IdTranslation` only allows looking up the mapping from a physical to virtual
+// address, which is safe to do from any context.
+unsafe impl Sync for IdTranslation {}
 
 /// Manages a page table using identity mapping.
 pub struct IdMap {
@@ -117,6 +125,29 @@ impl IdMap {
         // introduce any aliases.
         unsafe {
             self.mapping.activate();
+        }
+    }
+
+    /// Activates the page table on a secondary CPU core by setting `TTBR0_EL1` to point to it.
+    ///
+    /// Panics if `IdMap` has not already been activated on the primary core.
+    ///
+    /// The page table must not be dropped as long as it is active on the secondary core. The static
+    /// lifetime ensures this.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that the page table doesn't unmap any memory which the program is
+    /// using.
+    pub unsafe fn activate_secondary(&'static self) {
+        assert!(self.mapping.active());
+        unsafe {
+            asm!(
+                "msr ttbr0_el1, {ttbrval}",
+                "isb",
+                ttbrval = in(reg) self.mapping.root_address().0 | (ASID << 48),
+                options(preserves_flags, nostack),
+            );
         }
     }
 }

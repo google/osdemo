@@ -30,7 +30,7 @@ use core::{fmt::Write, ops::DerefMut};
 use devices::Devices;
 use flat_device_tree::{node::FdtNode, standard_nodes, Fdt};
 use log::{debug, info, LevelFilter};
-use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES};
+use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES, PAGETABLE};
 use pci::{find_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
 use spin::mutex::{SpinMutex, SpinMutexGuard};
@@ -97,6 +97,7 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
     unsafe {
         idmap.activate();
     }
+    PAGETABLE.call_once(|| idmap);
 
     let mut devices = Devices::new(parts.rtc);
     // SAFETY: We only call this once, and we trust that the FDT is correct and the platform has
