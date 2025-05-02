@@ -22,6 +22,7 @@ mod platform;
 pub mod secondary_entry;
 mod virtio;
 
+use crate::interrupts::init_gic;
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use aarch64_rt::entry;
 use alloc::vec::Vec;
@@ -74,8 +75,7 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
     );
 
     info!("Initialising GIC...");
-    parts.gic.setup(0);
-    PlatformImpl::setup_gic(&mut parts.gic);
+    init_gic(&mut parts.gic);
 
     info!("Initialising page table...");
     let mut page_allocator = Heap::new();

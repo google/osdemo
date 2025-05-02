@@ -2,6 +2,7 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
+use crate::platform::{Platform, PlatformImpl};
 use alloc::collections::btree_map::BTreeMap;
 use arm_gic::{gicv3::GicV3, IntId};
 use log::trace;
@@ -44,4 +45,10 @@ pub fn handle_irq() {
             panic!("Unexpected IRQ {:?} with no handler", intid);
         }
     });
+}
+
+/// Performs basic GIC initialisation on boot, ready to start handling interrupts.
+pub fn init_gic(gic: &mut GicV3) {
+    gic.setup(0);
+    PlatformImpl::setup_gic(gic);
 }
