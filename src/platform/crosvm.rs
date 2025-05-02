@@ -90,7 +90,7 @@ impl Platform for Crosvm {
     }
 
     fn setup_gic(gic: &mut GicV3) {
-        gic.set_interrupt_priority(Self::CONSOLE_IRQ, None, 0x80);
+        gic.set_interrupt_priority(Self::CONSOLE_IRQ, None, 0x10);
         gic.set_trigger(Self::CONSOLE_IRQ, None, Trigger::Edge);
         gic.enable_interrupt(Self::CONSOLE_IRQ, None, true);
         set_irq_handler(Self::CONSOLE_IRQ, &Console::<Uart>::handle_irq);
