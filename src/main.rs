@@ -22,7 +22,7 @@ mod platform;
 pub mod secondary_entry;
 mod virtio;
 
-use crate::interrupts::init_gic;
+use crate::interrupts::{init_gic, make_gic};
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use aarch64_rt::entry;
 use alloc::vec::Vec;
@@ -74,9 +74,6 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
         SpinMutexGuard::leak(HEAP.try_lock().unwrap()).as_mut_slice(),
     );
 
-    info!("Initialising GIC...");
-    init_gic(&mut parts.gic);
-
     info!("Initialising page table...");
     let mut page_allocator = Heap::new();
     add_to_heap(
@@ -100,6 +97,12 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
     }
     PAGETABLE.call_once(|| idmap);
 
+    info!("Initialising GIC...");
+    // SAFETY: We only call this once, here, and we've already mapped things and activated the
+    // pagetable.
+    let mut gic = unsafe { make_gic(&fdt).expect("No GIC found in FDT") };
+    init_gic(&mut gic);
+
     let mut devices = Devices::new(parts.rtc);
     // SAFETY: We only call this once, and we trust that the FDT is correct and the platform has
     // mapped all MMIO regions appropriately.
@@ -115,13 +118,7 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
         find_virtio_pci_devices(pci_root, &mut devices);
     }
 
-    shell::main(
-        &mut console,
-        &mut parts.gic,
-        &mut pci_roots,
-        &mut devices,
-        &fdt,
-    );
+    shell::main(&mut console, &mut gic, &mut pci_roots, &mut devices, &fdt);
 
     info!("Powering off.");
     PlatformImpl::power_off();

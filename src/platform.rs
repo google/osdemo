@@ -46,8 +46,6 @@ pub trait Platform {
 pub struct PlatformParts<Console, Rtc> {
     /// The primary console.
     pub console: Console,
-    /// The GIC.
-    pub gic: GicV3<'static>,
     /// The real-time clock.
     pub rtc: Rtc,
 }

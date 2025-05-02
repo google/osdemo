@@ -4,8 +4,15 @@
 
 use crate::platform::{Platform, PlatformImpl};
 use alloc::collections::btree_map::BTreeMap;
-use arm_gic::{gicv3::GicV3, IntId};
-use log::trace;
+use arm_gic::{
+    gicv3::{
+        registers::{Gicd, GicrSgi},
+        GicV3,
+    },
+    IntId,
+};
+use flat_device_tree::Fdt;
+use log::{info, trace};
 use percore::{exception_free, ExceptionLock};
 use spin::mutex::SpinMutex;
 
@@ -45,6 +52,42 @@ pub fn handle_irq() {
             panic!("Unexpected IRQ {:?} with no handler", intid);
         }
     });
+}
+
+/// Finds a GICv3 in the given device tree and constructs a driver for it.
+///
+/// # Safety
+///
+/// This must only be called once, to avoid creating multiple drivers with aliases to the same GIC.
+/// The given FDT must accurately reflect the platform, and the GIC device must already be mapped
+/// in the pagetable and not used anywhere else.
+pub unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
+    let cpu_count = fdt.cpus().count();
+
+    let node = fdt.find_compatible(&["arm,gic-v3"])?;
+    info!("Found GIC FDT node {}", node.name);
+    let mut reg = node.reg();
+    let gicd_region = reg.next().expect("GICD region missing");
+    let gicr_region = reg.next().expect("GICR region missing");
+    info!("  GICD: {:?}", gicd_region);
+    info!("  GICR: {:?}", gicr_region);
+    info!(
+        "  GICR space for {} CPUs",
+        gicr_region.size.unwrap() / size_of::<GicrSgi>()
+    );
+    assert_eq!(gicd_region.size.unwrap(), size_of::<Gicd>());
+    assert!(gicr_region.size.unwrap() >= size_of::<GicrSgi>() * cpu_count);
+    // SAFETY: Our caller promised that the device tree is accurate and we are only called once.
+    let gic = unsafe {
+        GicV3::new(
+            gicd_region.starting_address as _,
+            gicr_region.starting_address as _,
+            cpu_count,
+            false,
+        )
+    };
+
+    Some(gic)
 }
 
 /// Performs basic GIC initialisation on boot, ready to start handling interrupts.
