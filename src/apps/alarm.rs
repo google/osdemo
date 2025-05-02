@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{
-    interrupts::{remove_irq_handler, set_irq_handler},
+    interrupts::{remove_irq_handler, set_irq_handler, GIC},
     platform::{Platform, PlatformImpl},
 };
 use arm_gic::{gicv3::GicV3, IntId, Trigger};
@@ -17,7 +17,9 @@ use log::info;
 static ALARM_FIRED: AtomicBool = AtomicBool::new(false);
 
 /// Configures the RTC IRQ.
-pub fn irq_setup(gic: &mut GicV3) {
+pub fn irq_setup() {
+    let mut gic = GIC.get().unwrap().lock();
+
     set_irq_handler(PlatformImpl::RTC_IRQ, &irq_handle);
     gic.set_interrupt_priority(PlatformImpl::RTC_IRQ, None, 0x80);
     gic.set_trigger(PlatformImpl::RTC_IRQ, None, Trigger::Level);

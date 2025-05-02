@@ -32,14 +32,13 @@ const EOF: u8 = 0x04;
 
 pub fn main(
     console: &mut (impl Write + Read + ReadReady),
-    gic: &mut GicV3,
     pci_roots: &mut [PciRoot<MmioCam>],
     devices: &mut Devices,
     fdt: &Fdt,
 ) {
     info!("Configuring IRQs...");
     GicV3::set_priority_mask(0xff);
-    alarm::irq_setup(gic);
+    alarm::irq_setup();
     irq_enable();
 
     loop {

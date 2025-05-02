@@ -14,12 +14,14 @@ use arm_gic::{
 use flat_device_tree::Fdt;
 use log::{info, trace};
 use percore::{exception_free, ExceptionLock};
-use spin::mutex::SpinMutex;
+use spin::{mutex::SpinMutex, Once};
 
 type IrqHandler = &'static (dyn Fn(IntId) + Sync);
 
 static IRQ_HANDLER: ExceptionLock<SpinMutex<BTreeMap<IntId, IrqHandler>>> =
     ExceptionLock::new(SpinMutex::new(BTreeMap::new()));
+
+pub static GIC: Once<SpinMutex<GicV3>> = Once::new();
 
 /// Sets the IRQ handler for the given interrupt ID to the given function.
 ///
@@ -61,7 +63,7 @@ pub fn handle_irq() {
 /// This must only be called once, to avoid creating multiple drivers with aliases to the same GIC.
 /// The given FDT must accurately reflect the platform, and the GIC device must already be mapped
 /// in the pagetable and not used anywhere else.
-pub unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
+unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
     let cpu_count = fdt.cpus().count();
 
     let node = fdt.find_compatible(&["arm,gic-v3"])?;
@@ -90,8 +92,22 @@ pub unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
     Some(gic)
 }
 
-/// Performs basic GIC initialisation on boot, ready to start handling interrupts.
-pub fn init_gic(gic: &mut GicV3) {
-    gic.setup(0);
-    PlatformImpl::setup_gic(gic);
+/// Finds a GICv3 in the device tree, creates a driver for it, initialises it ready to start
+/// handling interrupts, and stores it for later access.
+///
+/// # Safety
+///
+/// The given FDT must accurately reflect the platform, and the GIC device must already be mapped
+/// in the pagetable and not used anywhere else.
+pub unsafe fn init_gic(fdt: &Fdt) {
+    GIC.call_once(|| {
+        // SAFETY: Our caller promised that the FDT is accurate, and the call_once ensures that this
+        // isn't called more than once.
+        let mut gic = unsafe { make_gic(fdt) }.expect("No GIC found in FDT");
+
+        gic.setup(0);
+        PlatformImpl::setup_gic(&mut gic);
+
+        SpinMutex::new(gic)
+    });
 }
