@@ -2,9 +2,11 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
+use crate::{cpus::mpidr_affinity, interrupts::secondary_init_gic, pagetable::PAGETABLE};
 use aarch64_rt::{start_core, Stack};
 use alloc::{boxed::Box, collections::btree_map::BTreeMap};
 use core::ops::DerefMut;
+use log::debug;
 use smccc::psci;
 use spin::mutex::SpinMutex;
 
@@ -13,6 +15,9 @@ const SECONDARY_STACK_PAGE_COUNT: usize = 4;
 
 /// Stacks allocated for secondary cores.
 static SECONDARY_STACKS: SpinMutex<BTreeMap<u64, SecondaryStack>> = SpinMutex::new(BTreeMap::new());
+
+static SECONDARY_ENTRY_POINTS: SpinMutex<BTreeMap<u64, fn(arg: u64) -> !>> =
+    SpinMutex::new(BTreeMap::new());
 
 /// A pointer to a stack allocated for a secondary CPU.
 ///
@@ -44,10 +49,29 @@ fn get_secondary_stack(mpidr: u64) -> *mut Stack<SECONDARY_STACK_PAGE_COUNT> {
 /// appropriate stack if necessary.
 pub fn start_core_with_stack(
     mpidr: u64,
-    rust_entry: extern "C" fn(arg: u64) -> !,
+    entry: fn(arg: u64) -> !,
     arg: u64,
 ) -> Result<(), psci::Error> {
     let stack = get_secondary_stack(mpidr);
+
+    SECONDARY_ENTRY_POINTS.lock().insert(mpidr, entry);
+
     // SAFETY: We allocate a unique stack per MPIDR, and never deallocate it.
-    unsafe { start_core(mpidr, stack, rust_entry, arg) }
+    unsafe { start_core(mpidr, stack, secondary_entry, arg) }
+}
+
+extern "C" fn secondary_entry(arg: u64) -> ! {
+    // SAFETY: All relevant memory was mapped before the pagetable was activated on the primary
+    // core.
+    unsafe {
+        PAGETABLE.get().unwrap().activate_secondary();
+    }
+    debug!("Page table activated on secondary CPU.");
+    secondary_init_gic();
+
+    let entry = SECONDARY_ENTRY_POINTS
+        .lock()
+        .remove(&mpidr_affinity())
+        .unwrap();
+    entry(arg)
 }

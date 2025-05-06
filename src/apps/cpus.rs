@@ -4,8 +4,7 @@
 
 use crate::{
     cpus::{current_cpu_index, read_mpidr_el1, MPIDR_AFFINITY_MASK, MPIDR_MT_BIT, MPIDR_U_BIT},
-    interrupts::{secondary_init_gic, GIC},
-    pagetable::PAGETABLE,
+    interrupts::GIC,
     secondary_entry::start_core_with_stack,
 };
 use arm_gic::{
@@ -49,24 +48,16 @@ pub fn start_cpu<'a>(console: &mut impl Write, fdt: &Fdt, mut args: impl Iterato
     writeln!(console, "CPU {}: ID {:#012x}", cpu_index, id).unwrap();
     let state = psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap();
     if state == AffinityState::Off {
-        let result = start_core_with_stack(id, rust_secondary_entry, arg);
+        let result = start_core_with_stack(id, secondary_entry, arg);
         writeln!(console, " => {:?}", result).unwrap();
     } else {
         writeln!(console, " already {:?}", state).unwrap();
     }
 }
 
-extern "C" fn rust_secondary_entry(arg: u64) -> ! {
-    info!("Secondary CPU started: {}", arg);
-    // SAFETY: All relevant memory was mapped before the pagetable was activated on the primary
-    // core.
-    unsafe {
-        PAGETABLE.get().unwrap().activate_secondary();
-    }
-    info!("Page table activated on secondary CPU.");
+fn secondary_entry(arg: u64) -> ! {
     let cpu = current_cpu_index();
-    info!("Initialising GIC for CPU {}", cpu);
-    secondary_init_gic();
+    info!("Secondary CPU {} started with arg {}", cpu, arg);
     {
         let mut gic = GIC.get().unwrap().lock();
         for i in 0..IntId::SGI_COUNT {

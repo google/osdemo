@@ -22,10 +22,14 @@ pub fn read_mpidr_el1() -> u64 {
     value
 }
 
+/// Reads the MPIDR value and returns the affinity bytes, masking out the other bits.
+pub fn mpidr_affinity() -> u64 {
+    read_mpidr_el1() & MPIDR_AFFINITY_MASK
+}
+
 /// Returns the index of the current CPU core in the FDT.
 pub fn current_cpu_index() -> usize {
-    let mpidr = read_mpidr_el1();
-    mpidr_to_cpu_index(mpidr & MPIDR_AFFINITY_MASK).unwrap()
+    mpidr_to_cpu_index(mpidr_affinity()).unwrap()
 }
 
 /// Returns the index in the FDT of the CPU core with the given MPIDR affinity fields, if it exists.
