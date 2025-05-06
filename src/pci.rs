@@ -88,7 +88,7 @@ impl PciRootInfo {
     ///
     /// This must only be called once per PCI root, to avoid creating aliases to the MMIO space. The
     /// root info must refer to a valid MMIO region which has already been mapped appropriately.
-    pub unsafe fn init_pci(self) -> PciRoot<MmioCam> {
+    pub unsafe fn init_pci(self) -> PciRoot<MmioCam<'static>> {
         // SAFETY: The caller promises that the pointer is to a valid MMIO region.
         let mut pci_root = PciRoot::new(unsafe { MmioCam::new(self.mmio_base, self.cam) });
 
