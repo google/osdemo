@@ -15,7 +15,7 @@ static CONSOLE: Once<SharedConsole<ConsoleImpl>> = Once::new();
 ///
 /// Any thread may write to it, but only a single thread may read from it.
 pub struct SharedConsole<T: Send> {
-    console: ExceptionLock<SpinMutex<T>>,
+    pub console: ExceptionLock<SpinMutex<T>>,
 }
 
 impl<T: ErrorType + Send> ErrorType for &SharedConsole<T> {

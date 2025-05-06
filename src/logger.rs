@@ -5,17 +5,18 @@
 use crate::console::SharedConsole;
 use embedded_io::Write;
 use log::{LevelFilter, Log, Metadata, Record, SetLoggerError};
+use percore::exception_free;
 
-impl<T: Send + 'static> Log for SharedConsole<T>
-where
-    for<'a> &'a SharedConsole<T>: Write,
-{
+impl<T: Send + Write> Log for SharedConsole<T> {
     fn enabled(&self, _metadata: &Metadata) -> bool {
         true
     }
 
-    fn log(mut self: &Self, record: &Record) {
-        writeln!(&mut self, "[{}] {}", record.level(), record.args()).unwrap();
+    fn log(self: &Self, record: &Record) {
+        exception_free(|token| {
+            let console = &mut *self.console.borrow(token).lock();
+            writeln!(console, "[{}] {}", record.level(), record.args()).unwrap();
+        });
     }
 
     fn flush(&self) {}
