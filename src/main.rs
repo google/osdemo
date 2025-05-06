@@ -11,6 +11,7 @@ extern crate alloc;
 
 mod apps;
 mod console;
+mod cpus;
 pub mod devices;
 pub mod drivers;
 mod exceptions;
@@ -53,14 +54,6 @@ static HEAP: SpinMutex<[u8; HEAP_SIZE]> = SpinMutex::new([0; HEAP_SIZE]);
 static HEAP_ALLOCATOR: LockedHeap<32> = LockedHeap::new();
 
 static FDT: Once<Fdt<'static>> = Once::new();
-
-fn mpidr_to_cpu_index(mpidr: u64) -> usize {
-    FDT.get()
-        .unwrap()
-        .cpus()
-        .position(|cpu| cpu.ids().unwrap().first().unwrap() as u64 == mpidr)
-        .unwrap()
-}
 
 entry!(main);
 fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {

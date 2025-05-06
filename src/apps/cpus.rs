@@ -3,14 +3,15 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{
-    interrupts::GIC, mpidr_to_cpu_index, pagetable::PAGETABLE,
+    cpus::{current_cpu_index, read_mpidr_el1, MPIDR_AFFINITY_MASK, MPIDR_MT_BIT, MPIDR_U_BIT},
+    interrupts::GIC,
+    pagetable::PAGETABLE,
     secondary_entry::start_core_with_stack,
 };
 use arm_gic::{
     gicv3::{GicV3, Group, SgiTarget},
     wfi, IntId,
 };
-use core::arch::asm;
 use embedded_io::Write;
 use flat_device_tree::Fdt;
 use log::{error, info};
@@ -92,9 +93,9 @@ pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
     writeln!(console, "PSCI version {}", psci::version::<Hvc>().unwrap()).unwrap();
 
     let mpidr = read_mpidr_el1();
-    let uniprocessor = mpidr & (1 << 30) != 0;
-    let multithreading = mpidr & (1 << 24) != 0;
-    let current_cpu = mpidr & 0xff00ffffff;
+    let uniprocessor = mpidr & MPIDR_U_BIT != 0;
+    let multithreading = mpidr & MPIDR_MT_BIT != 0;
+    let current_cpu = mpidr & MPIDR_AFFINITY_MASK;
     writeln!(
         console,
         "MPIDR {:#012x}: uniprocessor {}, multithreading {}",
@@ -147,22 +148,4 @@ pub fn sgi<'a>(console: &mut impl Write, mut args: impl Iterator<Item = &'a str>
     let intid = IntId::sgi(id);
     writeln!(console, "Sending {:?} to all CPUs", intid).unwrap();
     GicV3::send_sgi(intid, SgiTarget::All);
-}
-
-fn read_mpidr_el1() -> u64 {
-    let value;
-    // SAFETY: Reading the MPIDR is always safe.
-    unsafe {
-        asm!(
-            "mrs {value}, mpidr_el1",
-            options(nostack),
-            value = out(reg) value,
-        );
-    }
-    value
-}
-
-fn current_cpu_index() -> usize {
-    let mpidr = read_mpidr_el1();
-    mpidr_to_cpu_index(mpidr & 0xff00ffffff)
 }
