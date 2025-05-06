@@ -4,12 +4,12 @@
 
 use crate::{
     cpus::{current_cpu_index, read_mpidr_el1, MPIDR_AFFINITY_MASK, MPIDR_MT_BIT, MPIDR_U_BIT},
-    interrupts::GIC,
+    interrupts::{secondary_init_gic, GIC},
     pagetable::PAGETABLE,
     secondary_entry::start_core_with_stack,
 };
 use arm_gic::{
-    gicv3::{GicV3, Group, SgiTarget},
+    gicv3::{GicV3, SgiTarget},
     wfi, IntId,
 };
 use embedded_io::Write;
@@ -66,18 +66,15 @@ extern "C" fn rust_secondary_entry(arg: u64) -> ! {
     info!("Page table activated on secondary CPU.");
     let cpu = current_cpu_index();
     info!("Initialising GIC for CPU {}", cpu);
+    secondary_init_gic();
     {
         let mut gic = GIC.get().unwrap().lock();
-        gic.init_cpu(cpu);
         for i in 0..IntId::SGI_COUNT {
             let sgi = IntId::sgi(i);
             gic.enable_interrupt(sgi, Some(cpu), true);
             gic.set_interrupt_priority(sgi, Some(cpu), 0x80);
-            gic.set_group(sgi, Some(cpu), Group::Group1NS);
         }
     }
-    GicV3::enable_group1(true);
-    GicV3::set_priority_mask(0xff);
     // Don't actually unmask interrupts, as we haven't registered a handler.
     info!("Waiting for interrupt...");
     wfi();

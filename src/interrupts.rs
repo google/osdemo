@@ -2,7 +2,10 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::platform::{Platform, PlatformImpl};
+use crate::{
+    cpus::current_cpu_index,
+    platform::{Platform, PlatformImpl},
+};
 use alloc::collections::btree_map::BTreeMap;
 use arm_gic::{
     gicv3::{
@@ -110,4 +113,17 @@ pub unsafe fn init_gic(fdt: &Fdt) {
 
         SpinMutex::new(gic)
     });
+}
+
+/// Initialises the GIC on a secondary CPU core which has just come online.
+///
+/// This will panic if `init_gic` has not already been called on the primary CPU core.
+pub fn secondary_init_gic() {
+    let cpu = current_cpu_index();
+    {
+        let mut gic = GIC.get().unwrap().lock();
+        gic.init_cpu(cpu);
+    }
+    GicV3::enable_group1(true);
+    GicV3::set_priority_mask(0xff);
 }
