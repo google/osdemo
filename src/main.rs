@@ -35,7 +35,10 @@ use log::{debug, info, LevelFilter};
 use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES, PAGETABLE};
 use pci::{find_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
 use platform::{Platform, PlatformImpl};
-use spin::mutex::{SpinMutex, SpinMutexGuard};
+use spin::{
+    mutex::{SpinMutex, SpinMutexGuard},
+    Once,
+};
 use virtio::{find_virtio_mmio_devices, find_virtio_pci_devices};
 
 const LOG_LEVEL: LevelFilter = LevelFilter::Info;
@@ -48,6 +51,8 @@ static HEAP: SpinMutex<[u8; HEAP_SIZE]> = SpinMutex::new([0; HEAP_SIZE]);
 
 #[global_allocator]
 static HEAP_ALLOCATOR: LockedHeap<32> = LockedHeap::new();
+
+static FDT: Once<Fdt<'static>> = Once::new();
 
 entry!(main);
 fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
@@ -67,6 +72,7 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
     for reserved in fdt.memory_reservations() {
         info!("Reserved memory: {:?}", reserved);
     }
+    FDT.call_once(|| fdt);
 
     // Give the allocator some memory to allocate.
     add_to_heap(
