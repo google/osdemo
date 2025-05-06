@@ -12,9 +12,9 @@ use virtio_drivers::{
 
 pub struct Devices {
     pub rtc: Rtc,
-    pub block: Vec<VirtIOBlk<VirtioHal, SomeTransport>>,
-    pub console: Vec<VirtIOConsole<VirtioHal, SomeTransport>>,
-    pub vsock: Vec<VsockConnectionManager<VirtioHal, SomeTransport>>,
+    pub block: Vec<VirtIOBlk<VirtioHal, SomeTransport<'static>>>,
+    pub console: Vec<VirtIOConsole<VirtioHal, SomeTransport<'static>>>,
+    pub vsock: Vec<VsockConnectionManager<VirtioHal, SomeTransport<'static>>>,
 }
 
 impl Devices {
