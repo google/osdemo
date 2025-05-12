@@ -19,7 +19,7 @@ use virtio_drivers::{
             bus::{MmioCam, PciRoot},
             virtio_device_type, PciTransport,
         },
-        DeviceType, SomeTransport, Transport,
+        DeviceType, DeviceTypeError, SomeTransport, Transport,
     },
     BufferDirection, Hal, PhysAddr, PAGE_SIZE,
 };
@@ -49,7 +49,7 @@ pub unsafe fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
                     // SAFETY: The caller promised that the device tree is correct, VirtIO MMIO
                     // devices are mapped, and no aliases are constructed to the MMIO region.
                     match unsafe { MmioTransport::new(header, region_size) } {
-                        Err(MmioError::ZeroDeviceId) => {
+                        Err(MmioError::InvalidDeviceID(DeviceTypeError::InvalidDeviceType(0))) => {
                             debug!("Ignoring VirtIO device with zero device ID.");
                         }
                         Err(e) => {
@@ -74,7 +74,7 @@ pub unsafe fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
     }
 }
 
-fn init_virtio_device(transport: SomeTransport, devices: &mut Devices) {
+fn init_virtio_device(transport: SomeTransport<'static>, devices: &mut Devices) {
     match transport.device_type() {
         DeviceType::Block => {
             devices.block.push(VirtIOBlk::new(transport).unwrap());
