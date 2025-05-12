@@ -14,9 +14,9 @@ dependencies = [
 
 [[package]]
 name = "aarch64-rt"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88bc65baa2c14080f09023e84c6481a9b0e5265dc94f8c60b7f7d4d8efac66ab"
+checksum = "3be4edaff3b5ead5fb7e9ef0d72fa1e93b4052ec2410e0ebc93f6f360c9599ea"
 dependencies = [
  "cfg-if",
  "smccc",
