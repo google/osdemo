@@ -7,7 +7,7 @@ use aarch64_rt::{start_core, Stack};
 use alloc::{boxed::Box, collections::btree_map::BTreeMap};
 use core::ops::DerefMut;
 use log::debug;
-use smccc::psci;
+use smccc::{psci, Hvc};
 use spin::mutex::SpinMutex;
 
 /// The number of pages to allocate for each secondary core stack.
@@ -57,7 +57,7 @@ pub fn start_core_with_stack(
     SECONDARY_ENTRY_POINTS.lock().insert(mpidr, entry);
 
     // SAFETY: We allocate a unique stack per MPIDR, and never deallocate it.
-    unsafe { start_core(mpidr, stack, secondary_entry, arg) }
+    unsafe { start_core::<Hvc, SECONDARY_STACK_PAGE_COUNT>(mpidr, stack, secondary_entry, arg) }
 }
 
 extern "C" fn secondary_entry(arg: u64) -> ! {
