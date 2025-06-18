@@ -6,8 +6,8 @@ use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
 use arm_gic::IntId;
 use core::panic::PanicInfo;
 use embedded_io::{ErrorType, Read, ReadReady, Write};
-use percore::{exception_free, ExceptionLock};
-use spin::{mutex::SpinMutex, Once};
+use percore::{ExceptionLock, exception_free};
+use spin::{Once, mutex::SpinMutex};
 
 static CONSOLE: Once<SharedConsole<ConsoleImpl>> = Once::new();
 

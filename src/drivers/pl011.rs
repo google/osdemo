@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::console::InterruptRead;
-use arm_gic::{gicv3::GicV3, wfi, IntId};
+use arm_gic::{IntId, gicv3::GicV3, wfi};
 use arm_pl011_uart::{Interrupts, Uart};
 
 impl InterruptRead for Uart<'_> {

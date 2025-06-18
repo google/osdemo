@@ -6,7 +6,7 @@ use crate::interrupts::handle_irq;
 use core::arch::asm;
 use log::trace;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn sync_exception_current(elr: u64, _spsr: u64) {
     panic!(
         "Unexpected sync_exception_current, esr={:#x}, far={:#x}, elr={:#x}",
@@ -16,38 +16,38 @@ extern "C" fn sync_exception_current(elr: u64, _spsr: u64) {
     );
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn irq_current(_elr: u64, _spsr: u64) {
     trace!("irq_current");
     handle_irq();
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn fiq_current(_elr: u64, _spsr: u64) {
     panic!("Unexpected fiq_current");
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn serr_current(_elr: u64, _spsr: u64) {
     panic!("Unexpected serr_current");
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn sync_lower(_elr: u64, _spsr: u64) {
     panic!("Unexpected sync_lower");
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn irq_lower(_elr: u64, _spsr: u64) {
     panic!("Unexpected irq_lower");
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn fiq_lower(_elr: u64, _spsr: u64) {
     panic!("Unexpected fiq_lower");
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 extern "C" fn serr_lower(_elr: u64, _spsr: u64) {
     panic!("Unexpected serr_lower");
 }

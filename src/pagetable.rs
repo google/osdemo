@@ -4,11 +4,11 @@
 
 use crate::platform::PlatformImpl;
 use aarch64_paging::{
+    MapError, Mapping,
     paging::{
         Attributes, Constraints, MemoryRegion, PageTable, PhysicalAddress, Translation,
         TranslationRegime, VaRange, VirtualAddress,
     },
-    MapError, Mapping,
 };
 use aarch64_rt::initial_pagetable;
 use buddy_system_allocator::Heap;

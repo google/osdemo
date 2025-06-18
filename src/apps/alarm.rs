@@ -3,10 +3,10 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{
-    interrupts::{remove_irq_handler, set_irq_handler, GIC},
+    interrupts::{GIC, remove_irq_handler, set_irq_handler},
     platform::{Platform, PlatformImpl},
 };
-use arm_gic::{gicv3::GicV3, IntId, Trigger};
+use arm_gic::{IntId, Trigger, gicv3::GicV3};
 use arm_pl031::Rtc;
 use chrono::Duration;
 use core::sync::atomic::{AtomicBool, Ordering};

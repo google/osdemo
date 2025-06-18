@@ -8,20 +8,21 @@ use core::{alloc::Layout, mem::size_of, ptr::NonNull};
 use flat_device_tree::Fdt;
 use log::{debug, error, info, warn};
 use virtio_drivers::{
+    BufferDirection, Hal, PAGE_SIZE, PhysAddr,
     device::{
         blk::VirtIOBlk,
         console::VirtIOConsole,
         socket::{VirtIOSocket, VsockConnectionManager},
     },
     transport::{
+        DeviceType, DeviceTypeError, SomeTransport, Transport,
         mmio::{MmioError, MmioTransport, VirtIOHeader},
         pci::{
+            PciTransport,
             bus::{MmioCam, PciRoot},
-            virtio_device_type, PciTransport,
+            virtio_device_type,
         },
-        DeviceType, DeviceTypeError, SomeTransport, Transport,
     },
-    BufferDirection, Hal, PhysAddr, PAGE_SIZE,
 };
 
 const VIRTIO_MMIO_COMPATIBLE: &str = "virtio,mmio";

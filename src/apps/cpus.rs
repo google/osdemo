@@ -3,20 +3,21 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{
-    cpus::{current_cpu_index, read_mpidr_el1, MPIDR_AFFINITY_MASK, MPIDR_MT_BIT, MPIDR_U_BIT},
+    cpus::{MPIDR_AFFINITY_MASK, MPIDR_MT_BIT, MPIDR_U_BIT, current_cpu_index, read_mpidr_el1},
     interrupts::GIC,
     secondary_entry::start_core_with_stack,
 };
 use arm_gic::{
+    IntId,
     gicv3::{GicV3, SgiTarget},
-    wfi, IntId,
+    wfi,
 };
 use embedded_io::Write;
 use flat_device_tree::Fdt;
 use log::{error, info};
 use smccc::{
-    psci::{self, AffinityState, LowestAffinityLevel},
     Hvc,
+    psci::{self, AffinityState, LowestAffinityLevel},
 };
 
 pub fn start_cpu<'a>(console: &mut impl Write, fdt: &Fdt, mut args: impl Iterator<Item = &'a str>) {
