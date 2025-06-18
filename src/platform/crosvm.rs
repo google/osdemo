@@ -10,10 +10,10 @@ use crate::{
     pagetable::{DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
 };
 use aarch64_rt::InitialPagetable;
-use arm_gic::{gicv3::GicV3, IntId, Trigger};
+use arm_gic::{IntId, Trigger, gicv3::GicV3};
 use arm_pl031::Rtc;
 use log::error;
-use smccc::{psci::system_off, Hvc};
+use smccc::{Hvc, psci::system_off};
 
 /// Base address of the first 8250 UART.
 const UART_BASE_ADDRESS: *mut u8 = 0x03f8 as _;

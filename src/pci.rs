@@ -2,7 +2,7 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::pagetable::{IdMap, DEVICE_ATTRIBUTES};
+use crate::pagetable::{DEVICE_ATTRIBUTES, IdMap};
 use aarch64_paging::paging::MemoryRegion;
 use alloc::vec::Vec;
 use buddy_system_allocator::FrameAllocator;
@@ -11,7 +11,7 @@ use core::{
     cmp::min,
     fmt::{self, Debug, Display, Formatter},
 };
-use flat_device_tree::{node::FdtNode, standard_nodes::MemoryRange, Fdt};
+use flat_device_tree::{Fdt, node::FdtNode, standard_nodes::MemoryRange};
 use log::{info, warn};
 use virtio_drivers::transport::pci::bus::{
     BarInfo, Cam, Command, DeviceFunction, MemoryBarType, MmioCam, PciError, PciRoot,

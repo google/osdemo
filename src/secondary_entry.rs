@@ -3,11 +3,11 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{cpus::mpidr_affinity, interrupts::secondary_init_gic, pagetable::PAGETABLE};
-use aarch64_rt::{start_core, Stack};
+use aarch64_rt::{Stack, start_core};
 use alloc::{boxed::Box, collections::btree_map::BTreeMap};
 use core::ops::DerefMut;
 use log::debug;
-use smccc::{psci, Hvc};
+use smccc::{Hvc, psci};
 use spin::mutex::SpinMutex;
 
 /// The number of pages to allocate for each secondary core stack.

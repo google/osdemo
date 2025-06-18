@@ -6,7 +6,7 @@
 //! provided by crosvm, and won't work with real hardware.
 
 use crate::console::InterruptRead;
-use arm_gic::{gicv3::GicV3, wfi, IntId};
+use arm_gic::{IntId, gicv3::GicV3, wfi};
 use core::convert::Infallible;
 use core::fmt;
 use embedded_io::{ErrorType, Read, ReadReady, Write, WriteReady};

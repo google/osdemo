@@ -9,12 +9,12 @@ use crate::{
     pagetable::{DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
 };
 use aarch64_rt::InitialPagetable;
-use arm_gic::{gicv3::GicV3, IntId, Trigger};
+use arm_gic::{IntId, Trigger, gicv3::GicV3};
 use arm_pl011_uart::{Interrupts, PL011Registers, Uart, UniqueMmioPointer};
 use arm_pl031::Rtc;
 use core::ptr::NonNull;
 use log::error;
-use smccc::{psci::system_off, Hvc};
+use smccc::{Hvc, psci::system_off};
 
 /// Base address of the first PL011 UART.
 const UART_BASE_ADDRESS: *mut PL011Registers = 0x900_0000 as _;

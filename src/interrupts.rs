@@ -8,16 +8,16 @@ use crate::{
 };
 use alloc::collections::btree_map::BTreeMap;
 use arm_gic::{
-    gicv3::{
-        registers::{Gicd, GicrSgi},
-        GicV3,
-    },
     IntId,
+    gicv3::{
+        GicV3,
+        registers::{Gicd, GicrSgi},
+    },
 };
 use flat_device_tree::Fdt;
 use log::{info, trace};
-use percore::{exception_free, ExceptionLock};
-use spin::{mutex::SpinMutex, Once};
+use percore::{ExceptionLock, exception_free};
+use spin::{Once, mutex::SpinMutex};
 
 type IrqHandler = &'static (dyn Fn(IntId) + Sync);
 

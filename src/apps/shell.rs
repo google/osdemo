@@ -17,15 +17,15 @@ use embedded_io::{Read, ReadReady, Write};
 use flat_device_tree::Fdt;
 use log::info;
 use virtio_drivers::{
+    Hal,
     device::socket::{DisconnectReason, VsockAddr, VsockConnectionManager, VsockEventType},
     transport::{
+        Transport,
         pci::{
             bus::{MmioCam, PciRoot},
             virtio_device_type,
         },
-        Transport,
     },
-    Hal,
 };
 
 const EOF: u8 = 0x04;

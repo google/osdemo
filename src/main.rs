@@ -31,14 +31,14 @@ use apps::shell;
 use buddy_system_allocator::{Heap, LockedHeap};
 use core::{fmt::Write, ops::DerefMut};
 use devices::Devices;
-use flat_device_tree::{node::FdtNode, standard_nodes, Fdt};
-use log::{debug, info, LevelFilter};
-use pagetable::{IdMap, DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES, PAGETABLE};
-use pci::{find_pci_roots, PCIE_COMPATIBLE, PCI_COMPATIBLE};
+use flat_device_tree::{Fdt, node::FdtNode, standard_nodes};
+use log::{LevelFilter, debug, info};
+use pagetable::{DEVICE_ATTRIBUTES, IdMap, MEMORY_ATTRIBUTES, PAGETABLE};
+use pci::{PCI_COMPATIBLE, PCIE_COMPATIBLE, find_pci_roots};
 use platform::{Platform, PlatformImpl};
 use spin::{
-    mutex::{SpinMutex, SpinMutexGuard},
     Once,
+    mutex::{SpinMutex, SpinMutexGuard},
 };
 use virtio::{find_virtio_mmio_devices, find_virtio_pci_devices};
 
