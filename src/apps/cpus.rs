@@ -9,7 +9,7 @@ use crate::{
 };
 use arm_gic::{
     IntId,
-    gicv3::{GicV3, SgiTarget},
+    gicv3::{GicV3, InterruptGroup, SgiTarget, SgiTargetGroup},
     wfi,
 };
 use embedded_io::Write;
@@ -70,7 +70,8 @@ fn secondary_entry(arg: u64) -> ! {
     // Don't actually unmask interrupts, as we haven't registered a handler.
     info!("Waiting for interrupt...");
     wfi();
-    let intid = GicV3::get_and_acknowledge_interrupt().expect("No pending interrupt");
+    let intid =
+        GicV3::get_and_acknowledge_interrupt(InterruptGroup::Group1).expect("No pending interrupt");
     info!("Secondary CPU {} received interrupt {:?}.", cpu, intid);
     psci::cpu_off::<Hvc>().unwrap();
     error!("PSCI_CPU_OFF returned unexpectedly");
@@ -136,5 +137,5 @@ pub fn sgi<'a>(console: &mut impl Write, mut args: impl Iterator<Item = &'a str>
 
     let intid = IntId::sgi(id);
     writeln!(console, "Sending {:?} to all CPUs", intid).unwrap();
-    GicV3::send_sgi(intid, SgiTarget::All);
+    GicV3::send_sgi(intid, SgiTarget::All, SgiTargetGroup::CurrentGroup1);
 }

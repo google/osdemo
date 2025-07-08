@@ -6,7 +6,11 @@
 //! provided by crosvm, and won't work with real hardware.
 
 use crate::console::InterruptRead;
-use arm_gic::{IntId, gicv3::GicV3, wfi};
+use arm_gic::{
+    IntId,
+    gicv3::{GicV3, InterruptGroup},
+    wfi,
+};
 use core::convert::Infallible;
 use core::fmt;
 use embedded_io::{ErrorType, Read, ReadReady, Write, WriteReady};
@@ -135,7 +139,7 @@ impl ReadReady for Uart {
 
 impl InterruptRead for Uart {
     fn handle_irq(&mut self, intid: IntId) {
-        GicV3::end_interrupt(intid);
+        GicV3::end_interrupt(intid, InterruptGroup::Group1);
     }
 
     fn wait_for_irq() {
