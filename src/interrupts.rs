@@ -10,7 +10,7 @@ use alloc::collections::btree_map::BTreeMap;
 use arm_gic::{
     IntId,
     gicv3::{
-        GicV3,
+        GicV3, InterruptGroup,
         registers::{Gicd, GicrSgi},
     },
 };
@@ -48,7 +48,8 @@ pub fn remove_irq_handler(intid: IntId) -> Option<IrqHandler> {
 ///
 /// Panics if there is no no pending interrupt, or no registered handler for the pending interrupt.
 pub fn handle_irq() {
-    let intid = GicV3::get_and_acknowledge_interrupt().expect("No pending interrupt");
+    let intid =
+        GicV3::get_and_acknowledge_interrupt(InterruptGroup::Group1).expect("No pending interrupt");
     trace!("IRQ: {:?}", intid);
     exception_free(|token| {
         if let Some(handler) = IRQ_HANDLER.borrow(token).lock().get(&intid) {

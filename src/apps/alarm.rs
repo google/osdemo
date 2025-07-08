@@ -6,7 +6,10 @@ use crate::{
     interrupts::{GIC, remove_irq_handler, set_irq_handler},
     platform::{Platform, PlatformImpl},
 };
-use arm_gic::{IntId, Trigger, gicv3::GicV3};
+use arm_gic::{
+    IntId, Trigger,
+    gicv3::{GicV3, InterruptGroup},
+};
 use arm_pl031::Rtc;
 use chrono::Duration;
 use core::sync::atomic::{AtomicBool, Ordering};
@@ -41,7 +44,7 @@ fn irq_handle(_intid: IntId) {
 pub fn irq_finish(rtc: &mut Rtc) {
     if ALARM_FIRED.swap(false, Ordering::SeqCst) {
         rtc.clear_interrupt();
-        GicV3::end_interrupt(PlatformImpl::RTC_IRQ);
+        GicV3::end_interrupt(PlatformImpl::RTC_IRQ, InterruptGroup::Group1);
         info!("Alarm fired, clearing");
     }
 }
