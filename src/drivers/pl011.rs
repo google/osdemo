@@ -6,7 +6,6 @@ use crate::console::InterruptRead;
 use arm_gic::{
     IntId,
     gicv3::{GicV3, InterruptGroup},
-    wfi,
 };
 use arm_pl011_uart::{Interrupts, Uart};
 
@@ -14,9 +13,5 @@ impl InterruptRead for Uart<'_> {
     fn handle_irq(&mut self, intid: IntId) {
         self.clear_interrupts(Interrupts::RXI);
         GicV3::end_interrupt(intid, InterruptGroup::Group1);
-    }
-
-    fn wait_for_irq() {
-        wfi();
     }
 }

@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::platform::{ConsoleImpl, Platform, PlatformImpl};
-use arm_gic::IntId;
+use arm_gic::{IntId, wfi};
 use core::panic::PanicInfo;
 use embedded_io::{ErrorType, Read, ReadReady, Write};
 use percore::{ExceptionLock, exception_free};
@@ -99,7 +99,9 @@ impl<T: Send + InterruptRead> Console<T> {
 /// Trait to read characters from a UART in an interrupt-driven way.
 pub trait InterruptRead {
     /// Waits for an IRQ. May return early.
-    fn wait_for_irq();
+    fn wait_for_irq() {
+        wfi();
+    }
 
     /// Handles the given interrupt for the UART.
     ///
