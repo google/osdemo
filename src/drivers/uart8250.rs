@@ -5,7 +5,7 @@
 //! Minimal driver for an 8250 UART. This only implements enough to work with the emulated 8250
 //! provided by crosvm, and won't work with real hardware.
 
-use crate::console::InterruptRead;
+use super::InterruptDriven;
 use arm_gic::{
     IntId,
     gicv3::{GicV3, InterruptGroup},
@@ -136,7 +136,7 @@ impl ReadReady for Uart {
     }
 }
 
-impl InterruptRead for Uart {
+impl InterruptDriven for Uart {
     fn handle_irq(&mut self, intid: IntId) {
         GicV3::end_interrupt(intid, InterruptGroup::Group1);
     }
