@@ -4,13 +4,13 @@
 
 use crate::{
     cpus::{MPIDR_AFFINITY_MASK, MPIDR_MT_BIT, MPIDR_U_BIT, current_cpu_index, read_mpidr_el1},
-    interrupts::GIC,
+    interrupts::{GIC, remove_private_irq_handler, set_private_irq_handler},
     secondary_entry::start_core_with_stack,
 };
 use arm_gic::{
     IntId,
-    gicv3::{GicV3, InterruptGroup, SgiTarget, SgiTargetGroup},
-    wfi,
+    gicv3::{GicV3, SgiTarget, SgiTargetGroup},
+    irq_enable, wfi,
 };
 use embedded_io::Write;
 use flat_device_tree::Fdt;
@@ -67,16 +67,29 @@ fn secondary_entry(arg: u64) -> ! {
             gic.set_interrupt_priority(sgi, Some(cpu), 0x80);
         }
     }
-    // Don't actually unmask interrupts, as we haven't registered a handler.
+    for sgi in 0..IntId::SGI_COUNT {
+        set_private_irq_handler(IntId::sgi(sgi), &secondary_irq_handler);
+    }
+    irq_enable();
+
     info!("Waiting for interrupt...");
     wfi();
-    let intid =
-        GicV3::get_and_acknowledge_interrupt(InterruptGroup::Group1).expect("No pending interrupt");
-    info!("Secondary CPU {cpu} received interrupt {intid:?}.");
+
+    for sgi in 0..IntId::SGI_COUNT {
+        remove_private_irq_handler(IntId::sgi(sgi));
+    }
+
     psci::cpu_off::<Hvc>().unwrap();
     error!("PSCI_CPU_OFF returned unexpectedly");
     #[allow(clippy::empty_loop)]
     loop {}
+}
+
+fn secondary_irq_handler(intid: IntId) {
+    info!(
+        "Secondary CPU {} IRQ handler {intid:?}",
+        current_cpu_index()
+    );
 }
 
 pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
