@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{
-    interrupts::{GIC, remove_irq_handler, set_irq_handler},
+    interrupts::{GIC, remove_shared_irq_handler, set_shared_irq_handler},
     platform::{Platform, PlatformImpl},
 };
 use arm_gic::{
@@ -23,7 +23,7 @@ static ALARM_FIRED: AtomicBool = AtomicBool::new(false);
 pub fn irq_setup() {
     let mut gic = GIC.get().unwrap().lock();
 
-    set_irq_handler(PlatformImpl::RTC_IRQ, &irq_handle);
+    set_shared_irq_handler(PlatformImpl::RTC_IRQ, &irq_handle);
     gic.set_interrupt_priority(PlatformImpl::RTC_IRQ, None, 0x80);
     gic.set_trigger(PlatformImpl::RTC_IRQ, None, Trigger::Level);
     gic.enable_interrupt(PlatformImpl::RTC_IRQ, None, true);
@@ -31,7 +31,7 @@ pub fn irq_setup() {
 
 /// Removes our RTC IRQ handler.
 pub fn irq_remove() {
-    remove_irq_handler(PlatformImpl::RTC_IRQ);
+    remove_shared_irq_handler(PlatformImpl::RTC_IRQ);
 }
 
 /// Handles an RTC IRQ.

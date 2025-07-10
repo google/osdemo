@@ -186,9 +186,9 @@ dependencies = [
 
 [[package]]
 name = "percore"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37f3b91128b19c0e881596447f5e0da98ab04214b1ecdc9237f0650e64e05181"
+checksum = "d66defb75d077dc2449e4187d1fc52d25cd5c5420b1d6515a01104e16222624c"
 
 [[package]]
 name = "proc-macro2"

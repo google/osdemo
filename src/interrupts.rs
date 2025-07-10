@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{
-    cpus::current_cpu_index,
+    cpus::{PerCoreState, current_cpu_index, new_per_core_state_with_default},
     platform::{Platform, PlatformImpl},
 };
 use alloc::collections::btree_map::BTreeMap;
@@ -21,25 +21,68 @@ use spin::{Once, mutex::SpinMutex};
 
 type IrqHandler = &'static (dyn Fn(IntId) + Sync);
 
-static IRQ_HANDLER: ExceptionLock<SpinMutex<BTreeMap<IntId, IrqHandler>>> =
+static SHARED_IRQ_HANDLERS: ExceptionLock<SpinMutex<BTreeMap<IntId, IrqHandler>>> =
     ExceptionLock::new(SpinMutex::new(BTreeMap::new()));
+static PRIVATE_IRQ_HANDLERS: PerCoreState<BTreeMap<IntId, IrqHandler>> =
+    new_per_core_state_with_default();
 
 pub static GIC: Once<SpinMutex<GicV3>> = Once::new();
 
-/// Sets the IRQ handler for the given interrupt ID to the given function.
+/// Sets the IRQ handler for the given interrupt ID to the given function, on all cores.
 ///
 /// Returns the handler that was previously set, if any.
-pub fn set_irq_handler(intid: IntId, handler: IrqHandler) -> Option<IrqHandler> {
-    trace!("Setting IRQ handler for {:?}", intid);
-    exception_free(|token| IRQ_HANDLER.borrow(token).lock().insert(intid, handler))
+pub fn set_shared_irq_handler(intid: IntId, handler: IrqHandler) -> Option<IrqHandler> {
+    trace!("Setting shared IRQ handler for {:?}", intid);
+    exception_free(|token| {
+        assert!(
+            !PRIVATE_IRQ_HANDLERS
+                .get()
+                .borrow(token)
+                .borrow()
+                .contains_key(&intid),
+            "Private IRQ handler already exists for {intid:?}",
+        );
+        SHARED_IRQ_HANDLERS
+            .borrow(token)
+            .lock()
+            .insert(intid, handler)
+    })
 }
 
-/// Removes the IRQ handler for the given interrupt ID.
+/// Removes the shared IRQ handler for the given interrupt ID.
 ///
 /// Returns the handler that was previously set, if any.
-pub fn remove_irq_handler(intid: IntId) -> Option<IrqHandler> {
-    trace!("Removing IRQ handler for {:?}", intid);
-    exception_free(|token| IRQ_HANDLER.borrow(token).lock().remove(&intid))
+pub fn remove_shared_irq_handler(intid: IntId) -> Option<IrqHandler> {
+    trace!("Removing shared IRQ handler for {:?}", intid);
+    exception_free(|token| SHARED_IRQ_HANDLERS.borrow(token).lock().remove(&intid))
+}
+
+/// Sets the IRQ handler for the given interrupt ID to the given function, on the current core only.
+///
+/// Returns the handler that was previously set, if any.
+pub fn set_private_irq_handler(intid: IntId, handler: IrqHandler) -> Option<IrqHandler> {
+    trace!("Setting private IRQ handler for {:?}", intid);
+    exception_free(|token| {
+        assert!(
+            !SHARED_IRQ_HANDLERS
+                .borrow(token)
+                .lock()
+                .contains_key(&intid),
+            "Private IRQ handler already exists for {intid:?}",
+        );
+        PRIVATE_IRQ_HANDLERS
+            .get()
+            .borrow_mut(token)
+            .insert(intid, handler)
+    })
+}
+
+/// Removes the private IRQ handler for the given interrupt ID.
+///
+/// Returns the handler that was previously set, if any.
+pub fn remove_private_irq_handler(intid: IntId) -> Option<IrqHandler> {
+    trace!("Removing private IRQ handler for {:?}", intid);
+    exception_free(|token| PRIVATE_IRQ_HANDLERS.get().borrow_mut(token).remove(&intid))
 }
 
 /// Asks the GIC what interrupt is pending and then calls the appropriate handler.
@@ -52,7 +95,14 @@ pub fn handle_irq() {
         GicV3::get_and_acknowledge_interrupt(InterruptGroup::Group1).expect("No pending interrupt");
     trace!("IRQ: {:?}", intid);
     exception_free(|token| {
-        if let Some(handler) = IRQ_HANDLER.borrow(token).lock().get(&intid) {
+        if let Some(handler) = PRIVATE_IRQ_HANDLERS
+            .get()
+            .borrow(token)
+            .borrow()
+            .get(&intid)
+        {
+            handler(intid);
+        } else if let Some(handler) = SHARED_IRQ_HANDLERS.borrow(token).lock().get(&intid) {
             handler(intid);
         } else {
             panic!("Unexpected IRQ {:?} with no handler", intid);

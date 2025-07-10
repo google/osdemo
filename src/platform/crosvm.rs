@@ -6,7 +6,7 @@ use super::{Platform, PlatformParts};
 use crate::{
     console::Console,
     drivers::uart8250::Uart,
-    interrupts::set_irq_handler,
+    interrupts::set_shared_irq_handler,
     pagetable::{DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
 };
 use aarch64_rt::InitialPagetable;
@@ -80,6 +80,6 @@ impl Platform for Crosvm {
         gic.set_interrupt_priority(Self::CONSOLE_IRQ, None, 0x10);
         gic.set_trigger(Self::CONSOLE_IRQ, None, Trigger::Edge);
         gic.enable_interrupt(Self::CONSOLE_IRQ, None, true);
-        set_irq_handler(Self::CONSOLE_IRQ, &Console::<Uart>::handle_irq);
+        set_shared_irq_handler(Self::CONSOLE_IRQ, &Console::<Uart>::handle_irq);
     }
 }
