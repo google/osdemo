@@ -15,9 +15,7 @@ fn main() {
     let platform = env::var("CARGO_CFG_PLATFORM").expect("Missing platform name");
     assert!(
         PLATFORMS.contains(&platform.as_str()),
-        "Unexpected platform name {:?}. Supported platforms: {:?}",
-        platform,
-        PLATFORMS,
+        "Unexpected platform name {platform:?}. Supported platforms: {PLATFORMS:?}",
     );
 
     println!("cargo:rustc-link-arg=-Timage.ld");

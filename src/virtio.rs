@@ -54,7 +54,7 @@ pub unsafe fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
                             debug!("Ignoring VirtIO device with zero device ID.");
                         }
                         Err(e) => {
-                            error!("Error creating VirtIO transport: {}", e);
+                            error!("Error creating VirtIO transport: {e}");
                         }
                         Ok(mut transport) => {
                             info!(
@@ -89,7 +89,7 @@ fn init_virtio_device(transport: SomeTransport<'static>, devices: &mut Devices) 
             ));
         }
         t => {
-            warn!("Ignoring unsupported VirtIO device type {:?}", t);
+            warn!("Ignoring unsupported VirtIO device type {t:?}");
         }
     }
 }
@@ -98,7 +98,7 @@ pub fn find_virtio_pci_devices(pci_root: &mut PciRoot<MmioCam>, devices: &mut De
     info!("Looking for VirtIO devices on PCI bus");
     for (device_function, info) in pci_root.enumerate_bus(0) {
         if let Some(virtio_type) = virtio_device_type(&info) {
-            info!("  VirtIO {:?} {} at {}", virtio_type, info, device_function);
+            info!("  VirtIO {virtio_type:?} {info} at {device_function}");
             let mut transport =
                 PciTransport::new::<VirtioHal, _>(pci_root, device_function).unwrap();
             info!(

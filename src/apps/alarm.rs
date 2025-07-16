@@ -67,5 +67,5 @@ pub fn alarm<'a>(console: &mut impl Write, mut args: impl Iterator<Item = &'a st
     let alarm_time = timestamp + Duration::seconds(delay);
     rtc.set_match(alarm_time).unwrap();
     rtc.enable_interrupt(true);
-    writeln!(console, "Set alarm for {}", alarm_time).unwrap();
+    writeln!(console, "Set alarm for {alarm_time}").unwrap();
 }

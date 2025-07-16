@@ -46,19 +46,19 @@ pub fn start_cpu<'a>(console: &mut impl Write, fdt: &Fdt, mut args: impl Iterato
     };
 
     let id = cpu.ids().unwrap().first().unwrap() as u64;
-    writeln!(console, "CPU {}: ID {:#012x}", cpu_index, id).unwrap();
+    writeln!(console, "CPU {cpu_index}: ID {id:#012x}").unwrap();
     let state = psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap();
     if state == AffinityState::Off {
         let result = start_core_with_stack(id, secondary_entry, arg);
-        writeln!(console, " => {:?}", result).unwrap();
+        writeln!(console, " => {result:?}").unwrap();
     } else {
-        writeln!(console, " already {:?}", state).unwrap();
+        writeln!(console, " already {state:?}").unwrap();
     }
 }
 
 fn secondary_entry(arg: u64) -> ! {
     let cpu = current_cpu_index();
-    info!("Secondary CPU {} started with arg {}", cpu, arg);
+    info!("Secondary CPU {cpu} started with arg {arg}");
     {
         let mut gic = GIC.get().unwrap().lock();
         for i in 0..IntId::SGI_COUNT {
@@ -72,7 +72,7 @@ fn secondary_entry(arg: u64) -> ! {
     wfi();
     let intid =
         GicV3::get_and_acknowledge_interrupt(InterruptGroup::Group1).expect("No pending interrupt");
-    info!("Secondary CPU {} received interrupt {:?}.", cpu, intid);
+    info!("Secondary CPU {cpu} received interrupt {intid:?}.");
     psci::cpu_off::<Hvc>().unwrap();
     error!("PSCI_CPU_OFF returned unexpectedly");
     #[allow(clippy::empty_loop)]
@@ -88,8 +88,7 @@ pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
     let current_cpu = mpidr & MPIDR_AFFINITY_MASK;
     writeln!(
         console,
-        "MPIDR {:#012x}: uniprocessor {}, multithreading {}",
-        mpidr, uniprocessor, multithreading
+        "MPIDR {mpidr:#012x}: uniprocessor {uniprocessor}, multithreading {multithreading}"
     )
     .unwrap();
     writeln!(
@@ -102,7 +101,7 @@ pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
 
     for (i, cpu) in fdt.cpus().enumerate() {
         let id = cpu.ids().unwrap().first().unwrap() as u64;
-        writeln!(console, "CPU {}: ID {:#012x}", i, id).unwrap();
+        writeln!(console, "CPU {i}: ID {id:#012x}").unwrap();
         writeln!(
             console,
             "  affinity state {:?} {:?} {:?} {:?}",
@@ -136,6 +135,6 @@ pub fn sgi<'a>(console: &mut impl Write, mut args: impl Iterator<Item = &'a str>
     }
 
     let intid = IntId::sgi(id);
-    writeln!(console, "Sending {:?} to all CPUs", intid).unwrap();
+    writeln!(console, "Sending {intid:?} to all CPUs").unwrap();
     GicV3::send_sgi(intid, SgiTarget::All, SgiTargetGroup::CurrentGroup1);
 }

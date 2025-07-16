@@ -51,6 +51,8 @@ fn mpidr_to_cpu_index(mpidr_affinity: u64) -> Option<usize> {
 /// An implementation of `percore::Cores`, to return the index of the curren CPU core.
 pub struct CoresImpl;
 
+// SAFETY: `current_cpu_index` gets the CPU index by looking up the MPIDR in the FDT, so can never
+// return the same index for different affinity values.
 unsafe impl Cores for CoresImpl {
     fn core_index() -> usize {
         current_cpu_index()

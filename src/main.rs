@@ -64,14 +64,14 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
     writeln!(parts.console, "DemoOS starting...").unwrap();
     let mut console = console::init(parts.console);
     logger::init(console.shared(), LOG_LEVEL).unwrap();
-    info!("FDT address: {:?}", fdt_address);
+    info!("FDT address: {fdt_address:?}");
     // SAFETY: We trust that the FDT pointer we were given is valid, and this is the only time we
     // use it.
     let fdt = unsafe { Fdt::from_ptr(fdt_address).unwrap() };
     info!("FDT size: {} bytes", fdt.total_size());
-    debug!("FDT: {:?}", fdt);
+    debug!("FDT: {fdt:?}");
     for reserved in fdt.memory_reservations() {
-        info!("Reserved memory: {:?}", reserved);
+        info!("Reserved memory: {reserved:?}");
     }
     FDT.call_once(|| fdt);
 

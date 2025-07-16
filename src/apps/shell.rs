@@ -103,11 +103,11 @@ fn read_line(console: &mut (impl Write + Read)) -> ArrayVec<u8, 128> {
 
 fn date(console: &mut (impl Write + Read), rtc: &mut Rtc) {
     let time = rtc.get_time();
-    writeln!(console, "{}", time).unwrap();
+    writeln!(console, "{time}").unwrap();
 }
 
 fn dtdump(console: &mut impl Write, fdt: &Fdt) {
-    writeln!(console, "{:?}", fdt).unwrap();
+    writeln!(console, "{fdt:?}").unwrap();
 }
 
 fn help(console: &mut (impl Write + Read)) {
@@ -136,7 +136,7 @@ fn lsdev(console: &mut impl Write, devices: &mut Devices) {
         let id_len = match device.device_id(&mut id_buffer) {
             Ok(id_len) => id_len,
             Err(e) => {
-                writeln!(console, "Error getting ID: {}", e).unwrap();
+                writeln!(console, "Error getting ID: {e}").unwrap();
                 0
             }
         };
@@ -172,12 +172,11 @@ fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot<MmioCam>]) {
             let (status, command) = pci_root.get_status_command(device_function);
             writeln!(
                 console,
-                "{} at {}, status {:?} command {:?}",
-                info, device_function, status, command
+                "{info} at {device_function}, status {status:?} command {command:?}"
             )
             .unwrap();
             if let Some(virtio_type) = virtio_device_type(&info) {
-                writeln!(console, "  VirtIO {:?}", virtio_type).unwrap();
+                writeln!(console, "  VirtIO {virtio_type:?}").unwrap();
             }
             for (bar_index, info) in pci_root
                 .bars(device_function)
@@ -186,7 +185,7 @@ fn lspci(console: &mut impl Write, pci_roots: &mut [PciRoot<MmioCam>]) {
                 .enumerate()
             {
                 if let Some(info) = info {
-                    writeln!(console, "  BAR {}: {}", bar_index, info).unwrap();
+                    writeln!(console, "  BAR {bar_index}: {info}").unwrap();
                 }
             }
         }
@@ -257,14 +256,13 @@ fn vcat<'a, H: Hal, T: Transport>(
                     }
                     VsockEventType::CreditUpdate => {}
                     _ => {
-                        writeln!(console, "Event: {:?}", event).unwrap();
+                        writeln!(console, "Event: {event:?}").unwrap();
                     }
                 }
             } else {
                 writeln!(
                     console,
-                    "Event for unexpected source or destination: {:?}",
-                    event
+                    "Event for unexpected source or destination: {event:?}"
                 )
                 .unwrap();
             }

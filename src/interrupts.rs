@@ -32,7 +32,7 @@ pub static GIC: Once<SpinMutex<GicV3>> = Once::new();
 ///
 /// Returns the handler that was previously set, if any.
 pub fn set_shared_irq_handler(intid: IntId, handler: IrqHandler) -> Option<IrqHandler> {
-    trace!("Setting shared IRQ handler for {:?}", intid);
+    trace!("Setting shared IRQ handler for {intid:?}");
     exception_free(|token| {
         assert!(
             !PRIVATE_IRQ_HANDLERS
@@ -53,7 +53,7 @@ pub fn set_shared_irq_handler(intid: IntId, handler: IrqHandler) -> Option<IrqHa
 ///
 /// Returns the handler that was previously set, if any.
 pub fn remove_shared_irq_handler(intid: IntId) -> Option<IrqHandler> {
-    trace!("Removing shared IRQ handler for {:?}", intid);
+    trace!("Removing shared IRQ handler for {intid:?}");
     exception_free(|token| SHARED_IRQ_HANDLERS.borrow(token).lock().remove(&intid))
 }
 
@@ -61,7 +61,7 @@ pub fn remove_shared_irq_handler(intid: IntId) -> Option<IrqHandler> {
 ///
 /// Returns the handler that was previously set, if any.
 pub fn set_private_irq_handler(intid: IntId, handler: IrqHandler) -> Option<IrqHandler> {
-    trace!("Setting private IRQ handler for {:?}", intid);
+    trace!("Setting private IRQ handler for {intid:?}");
     exception_free(|token| {
         assert!(
             !SHARED_IRQ_HANDLERS
@@ -81,7 +81,7 @@ pub fn set_private_irq_handler(intid: IntId, handler: IrqHandler) -> Option<IrqH
 ///
 /// Returns the handler that was previously set, if any.
 pub fn remove_private_irq_handler(intid: IntId) -> Option<IrqHandler> {
-    trace!("Removing private IRQ handler for {:?}", intid);
+    trace!("Removing private IRQ handler for {intid:?}");
     exception_free(|token| PRIVATE_IRQ_HANDLERS.get().borrow_mut(token).remove(&intid))
 }
 
@@ -93,7 +93,7 @@ pub fn remove_private_irq_handler(intid: IntId) -> Option<IrqHandler> {
 pub fn handle_irq() {
     let intid =
         GicV3::get_and_acknowledge_interrupt(InterruptGroup::Group1).expect("No pending interrupt");
-    trace!("IRQ: {:?}", intid);
+    trace!("IRQ: {intid:?}");
     exception_free(|token| {
         if let Some(handler) = PRIVATE_IRQ_HANDLERS
             .get()
@@ -125,8 +125,8 @@ unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
     let mut reg = node.reg();
     let gicd_region = reg.next().expect("GICD region missing");
     let gicr_region = reg.next().expect("GICR region missing");
-    info!("  GICD: {:?}", gicd_region);
-    info!("  GICR: {:?}", gicr_region);
+    info!("  GICD: {gicd_region:?}");
+    info!("  GICR: {gicr_region:?}");
     info!(
         "  GICR space for {} CPUs",
         gicr_region.size.unwrap() / size_of::<GicrSgi>()

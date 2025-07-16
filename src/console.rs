@@ -112,7 +112,7 @@ fn panic(info: &PanicInfo) -> ! {
     if let Some(console) = CONSOLE.get() {
         exception_free(|token| {
             // Ignore any errors writing to the console, to avoid panicking recursively.
-            let _ = writeln!(console.console.borrow(token).lock(), "{}", info);
+            let _ = writeln!(console.console.borrow(token).lock(), "{info}");
         });
     }
     PlatformImpl::power_off();

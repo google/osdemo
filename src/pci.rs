@@ -40,7 +40,7 @@ impl PciRootInfo {
         let mut ranges = Vec::new();
         for range in pci_node.ranges() {
             let mut range = PciRange::from(range);
-            info!("PCI range {}", range);
+            info!("PCI range {range}");
             if matches!(
                 range.flags.range_type(),
                 PciRangeType::Memory32 | PciRangeType::Memory64
@@ -74,7 +74,7 @@ impl PciRootInfo {
                 PciRangeType::Memory32 | PciRangeType::Memory64
             ) {
                 let memory_region = range.memory_region();
-                info!("Mappping {}", memory_region);
+                info!("Mappping {memory_region}");
                 idmap.map_range(&memory_region, DEVICE_ATTRIBUTES).unwrap();
             }
         }
@@ -94,7 +94,7 @@ impl PciRootInfo {
 
         let mut allocator = PciBarAllocator::new(self.ranges);
         for (device_function, info) in pci_root.enumerate_bus(0) {
-            info!("Initialising bars for {} {}", device_function, info);
+            info!("Initialising bars for {device_function} {info}");
             allocate_bars(&mut pci_root, &mut allocator, device_function).unwrap();
         }
 
@@ -245,7 +245,7 @@ fn allocate_bars(
     {
         let Some(info) = info else { continue };
         let bar_index = bar_index as u8;
-        info!("BAR {}: {}", bar_index, info);
+        info!("BAR {bar_index}: {info}");
         match info {
             BarInfo::Memory {
                 address_type,
@@ -261,12 +261,12 @@ fn allocate_bars(
                                 warn!("  32-bit BAR should not be marked prefetchable.");
                             }
                             let allocation = allocator.allocate32(layout);
-                            info!("  allocated {:#0x}", allocation);
+                            info!("  allocated {allocation:#0x}");
                             pci_root.set_bar_32(device_function, bar_index, allocation);
                         }
                         MemoryBarType::Width64 => {
                             let allocation = allocator.allocate64(layout, prefetchable);
-                            info!("  allocated {:#0x}", allocation);
+                            info!("  allocated {allocation:#0x}");
                             pci_root.set_bar_64(device_function, bar_index, allocation);
                         }
                         MemoryBarType::Below1MiB => {
