@@ -141,10 +141,9 @@ impl IdMap {
     pub unsafe fn activate_secondary(&'static self) {
         assert!(self.mapping.active());
         // SAFETY: Our caller promised that the page table doesn't unmapping anything which the
-        // program needs. The static lifetime of &self ensures that the page table isn't dropped. We
-        // just checked that the table has already been marked as active.
+        // program needs. The static lifetime of &self ensures that the page table isn't dropped.
         unsafe {
-            self.mapping.activate_raw();
+            self.mapping.activate();
         }
     }
 }
