@@ -25,7 +25,7 @@ chrono = { version = "0.4.41", default-features = false }
 embedded-io = "0.6.1"
 flat_device_tree = { version = "3.1.1", features = ["pretty-printing"] }
 log = "0.4.27"
-percore = "0.2.0"
+percore = "0.2.1"
 smccc = "0.2.2"
 spin = { version = "0.10.0", features = [
   "lazy",
