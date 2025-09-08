@@ -16,7 +16,7 @@ arm_pl031 = "0.2.1"
 arm-gic = "0.6.1"
 arm-pl011-uart = "0.3.2"
 arrayvec = { version = "0.7.6", default-features = false }
-bitflags = "2.9.3"
+bitflags = "2.9.4"
 buddy_system_allocator = { version = "0.11.0", default-features = false, features = [
   "alloc",
   "use_spin",
