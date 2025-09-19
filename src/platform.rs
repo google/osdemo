@@ -22,9 +22,6 @@ pub trait Platform {
     /// The IRQ used by the RTC.
     const RTC_IRQ: IntId;
 
-    /// Powers off the system.
-    fn power_off() -> !;
-
     /// Creates an instance of the platform.
     ///
     /// # Safety

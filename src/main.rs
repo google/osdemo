@@ -32,10 +32,11 @@ use buddy_system_allocator::{Heap, LockedHeap};
 use core::{fmt::Write, ops::DerefMut};
 use devices::Devices;
 use flat_device_tree::{Fdt, node::FdtNode, standard_nodes};
-use log::{LevelFilter, debug, info};
+use log::{LevelFilter, debug, error, info};
 use pagetable::{DEVICE_ATTRIBUTES, IdMap, MEMORY_ATTRIBUTES, PAGETABLE};
 use pci::{PCI_COMPATIBLE, PCIE_COMPATIBLE, find_pci_roots};
 use platform::{Platform, PlatformImpl};
+use smccc::{Hvc, psci::system_off};
 use spin::{
     Once,
     mutex::{SpinMutex, SpinMutexGuard},
@@ -129,7 +130,7 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
     shell::main(&mut console, &mut pci_roots, &mut devices, &fdt);
 
     info!("Powering off.");
-    PlatformImpl::power_off();
+    power_off();
 }
 
 /// Adds the given memory range to the given heap.
@@ -207,4 +208,12 @@ fn is_compatible(node: &FdtNode, with: &[&str]) -> bool {
     } else {
         false
     }
+}
+
+/// Powers off the system via PSCI.
+fn power_off() -> ! {
+    system_off::<Hvc>().unwrap();
+    error!("PSCI_SYSTEM_OFF returned unexpectedly");
+    #[allow(clippy::empty_loop)]
+    loop {}
 }

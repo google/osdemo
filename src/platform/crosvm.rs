@@ -12,8 +12,6 @@ use crate::{
 use aarch64_rt::InitialPagetable;
 use arm_gic::{IntId, Trigger, gicv3::GicV3};
 use arm_pl031::Rtc;
-use log::error;
-use smccc::{Hvc, psci::system_off};
 
 /// Base address of the first 8250 UART.
 const UART_BASE_ADDRESS: *mut u8 = 0x03f8 as _;
@@ -46,13 +44,6 @@ impl Platform for Crosvm {
     type Rtc = Rtc;
 
     const RTC_IRQ: IntId = IntId::spi(1);
-
-    fn power_off() -> ! {
-        system_off::<Hvc>().unwrap();
-        error!("PSCI_SYSTEM_OFF returned unexpectedly");
-        #[allow(clippy::empty_loop)]
-        loop {}
-    }
 
     unsafe fn create() -> Self {
         // SAFETY: There is a suitable UART at this base address on crosvm, and we have mapped it

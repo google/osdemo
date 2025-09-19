@@ -13,8 +13,6 @@ use arm_gic::{IntId, Trigger, gicv3::GicV3};
 use arm_pl011_uart::{Interrupts, PL011Registers, Uart, UniqueMmioPointer};
 use arm_pl031::Rtc;
 use core::ptr::NonNull;
-use log::error;
-use smccc::{Hvc, psci::system_off};
 
 /// Base address of the first PL011 UART.
 const UART_BASE_ADDRESS: *mut PL011Registers = 0x900_0000 as _;
@@ -45,13 +43,6 @@ impl Platform for Qemu {
     type Rtc = Rtc;
 
     const RTC_IRQ: IntId = IntId::spi(2);
-
-    fn power_off() -> ! {
-        system_off::<Hvc>().unwrap();
-        error!("PSCI_SYSTEM_OFF returned unexpectedly");
-        #[allow(clippy::empty_loop)]
-        loop {}
-    }
 
     unsafe fn create() -> Self {
         let mut uart = Uart::new(

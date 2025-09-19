@@ -2,10 +2,7 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::{
-    drivers::InterruptDriven,
-    platform::{ConsoleImpl, Platform, PlatformImpl},
-};
+use crate::{drivers::InterruptDriven, platform::ConsoleImpl, power_off};
 use arm_gic::IntId;
 use core::panic::PanicInfo;
 use embedded_io::{ErrorType, Read, ReadReady, Write};
@@ -115,5 +112,5 @@ fn panic(info: &PanicInfo) -> ! {
             let _ = writeln!(console.console.borrow(token).lock(), "{info}");
         });
     }
-    PlatformImpl::power_off();
+    power_off();
 }
