@@ -212,8 +212,11 @@ fn is_compatible(node: &FdtNode, with: &[&str]) -> bool {
 
 /// Powers off the system via PSCI.
 fn power_off() -> ! {
-    system_off::<Hvc>().unwrap();
-    error!("PSCI_SYSTEM_OFF returned unexpectedly");
+    if let Err(e) = system_off::<Hvc>() {
+        error!("PSCI_SYSTEM_OFF failed: {e}");
+    } else {
+        error!("PSCI_SYSTEM_OFF returned unexpectedly");
+    }
     #[allow(clippy::empty_loop)]
     loop {}
 }
