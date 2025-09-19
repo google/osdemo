@@ -36,7 +36,7 @@ use log::{LevelFilter, debug, error, info};
 use pagetable::{DEVICE_ATTRIBUTES, IdMap, MEMORY_ATTRIBUTES, PAGETABLE};
 use pci::{PCI_COMPATIBLE, PCIE_COMPATIBLE, find_pci_roots};
 use platform::{Platform, PlatformImpl};
-use smccc::{Hvc, psci::system_off};
+use smccc::{Hvc, Smc, psci::system_off};
 use spin::{
     Once,
     mutex::{SpinMutex, SpinMutexGuard},
@@ -212,11 +212,30 @@ fn is_compatible(node: &FdtNode, with: &[&str]) -> bool {
 
 /// Powers off the system via PSCI.
 fn power_off() -> ! {
-    if let Err(e) = system_off::<Hvc>() {
+    let result = if smc_for_psci() {
+        system_off::<Smc>()
+    } else {
+        system_off::<Hvc>()
+    };
+    if let Err(e) = result {
         error!("PSCI_SYSTEM_OFF failed: {e}");
     } else {
         error!("PSCI_SYSTEM_OFF returned unexpectedly");
     }
     #[allow(clippy::empty_loop)]
     loop {}
+}
+
+/// Returns whether to use SMC calls for PSCI rather than HVCs.
+fn smc_for_psci() -> bool {
+    let Some(fdt) = FDT.get() else {
+        return false;
+    };
+    let Some(psci_node) = fdt.find_node("/psci") else {
+        return false;
+    };
+    let Some(method) = psci_node.property("method") else {
+        return false;
+    };
+    method.value == b"smc\0"
 }

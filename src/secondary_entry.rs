@@ -2,12 +2,14 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::{cpus::mpidr_affinity, interrupts::secondary_init_gic, pagetable::PAGETABLE};
+use crate::{
+    cpus::mpidr_affinity, interrupts::secondary_init_gic, pagetable::PAGETABLE, smc_for_psci,
+};
 use aarch64_rt::{Stack, start_core};
 use alloc::{boxed::Box, collections::btree_map::BTreeMap};
 use core::ops::DerefMut;
 use log::debug;
-use smccc::{Hvc, psci};
+use smccc::{Hvc, Smc, psci};
 use spin::mutex::SpinMutex;
 
 /// The number of pages to allocate for each secondary core stack.
@@ -57,7 +59,13 @@ pub fn start_core_with_stack(
     SECONDARY_ENTRY_POINTS.lock().insert(mpidr, entry);
 
     // SAFETY: We allocate a unique stack per MPIDR, and never deallocate it.
-    unsafe { start_core::<Hvc, SECONDARY_STACK_PAGE_COUNT>(mpidr, stack, secondary_entry, arg) }
+    unsafe {
+        if smc_for_psci() {
+            start_core::<Smc, SECONDARY_STACK_PAGE_COUNT>(mpidr, stack, secondary_entry, arg)
+        } else {
+            start_core::<Hvc, SECONDARY_STACK_PAGE_COUNT>(mpidr, stack, secondary_entry, arg)
+        }
+    }
 }
 
 extern "C" fn secondary_entry(arg: u64) -> ! {

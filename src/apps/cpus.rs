@@ -6,6 +6,7 @@ use crate::{
     cpus::{MPIDR_AFFINITY_MASK, MPIDR_MT_BIT, MPIDR_U_BIT, current_cpu_index, read_mpidr_el1},
     interrupts::{GIC, remove_private_irq_handler, set_private_irq_handler},
     secondary_entry::start_core_with_stack,
+    smc_for_psci,
 };
 use arm_gic::{
     IntId,
@@ -16,7 +17,7 @@ use embedded_io::Write;
 use flat_device_tree::Fdt;
 use log::{error, info};
 use smccc::{
-    Hvc,
+    Hvc, Smc,
     psci::{self, AffinityState, LowestAffinityLevel},
 };
 
@@ -47,7 +48,12 @@ pub fn start_cpu<'a>(console: &mut impl Write, fdt: &Fdt, mut args: impl Iterato
 
     let id = cpu.ids().unwrap().first().unwrap() as u64;
     writeln!(console, "CPU {cpu_index}: ID {id:#012x}").unwrap();
-    let state = psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap();
+    let state = if smc_for_psci() {
+        psci::affinity_info::<Smc>(id, LowestAffinityLevel::All)
+    } else {
+        psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All)
+    }
+    .unwrap();
     if state == AffinityState::Off {
         let result = start_core_with_stack(id, secondary_entry, arg);
         writeln!(console, " => {result:?}").unwrap();
@@ -79,7 +85,12 @@ fn secondary_entry(arg: u64) -> ! {
         remove_private_irq_handler(IntId::sgi(sgi));
     }
 
-    psci::cpu_off::<Hvc>().unwrap();
+    if smc_for_psci() {
+        psci::cpu_off::<Smc>()
+    } else {
+        psci::cpu_off::<Hvc>()
+    }
+    .unwrap();
     error!("PSCI_CPU_OFF returned unexpectedly");
     #[allow(clippy::empty_loop)]
     loop {}
@@ -93,7 +104,19 @@ fn secondary_irq_handler(intid: IntId) {
 }
 
 pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
-    writeln!(console, "PSCI version {}", psci::version::<Hvc>().unwrap()).unwrap();
+    let smc_for_psci = smc_for_psci();
+
+    writeln!(
+        console,
+        "PSCI version {}",
+        if smc_for_psci {
+            psci::version::<Smc>()
+        } else {
+            psci::version::<Hvc>()
+        }
+        .unwrap()
+    )
+    .unwrap();
 
     let mpidr = read_mpidr_el1();
     let uniprocessor = mpidr & MPIDR_U_BIT != 0;
@@ -108,21 +131,37 @@ pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
         console,
         "Current CPU {:#012x} affinity state {:?}",
         current_cpu,
-        psci::affinity_info::<Hvc>(current_cpu, LowestAffinityLevel::All).unwrap(),
+        if smc_for_psci {
+            psci::affinity_info::<Smc>(current_cpu, LowestAffinityLevel::All)
+        } else {
+            psci::affinity_info::<Hvc>(current_cpu, LowestAffinityLevel::All)
+        }
+        .unwrap(),
     )
     .unwrap();
 
     for (i, cpu) in fdt.cpus().enumerate() {
         let id = cpu.ids().unwrap().first().unwrap() as u64;
         writeln!(console, "CPU {i}: ID {id:#012x}").unwrap();
-        writeln!(
-            console,
-            "  affinity state {:?} {:?} {:?} {:?}",
-            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap(),
-            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Ignored).unwrap(),
-            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Aff1Ignored).unwrap(),
-            psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Aff1Aff2Ignored).unwrap(),
-        )
+        if smc_for_psci {
+            writeln!(
+                console,
+                "  affinity state {:?} {:?} {:?} {:?}",
+                psci::affinity_info::<Smc>(id, LowestAffinityLevel::All).unwrap(),
+                psci::affinity_info::<Smc>(id, LowestAffinityLevel::Aff0Ignored).unwrap(),
+                psci::affinity_info::<Smc>(id, LowestAffinityLevel::Aff0Aff1Ignored).unwrap(),
+                psci::affinity_info::<Smc>(id, LowestAffinityLevel::Aff0Aff1Aff2Ignored).unwrap(),
+            )
+        } else {
+            writeln!(
+                console,
+                "  affinity state {:?} {:?} {:?} {:?}",
+                psci::affinity_info::<Hvc>(id, LowestAffinityLevel::All).unwrap(),
+                psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Ignored).unwrap(),
+                psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Aff1Ignored).unwrap(),
+                psci::affinity_info::<Hvc>(id, LowestAffinityLevel::Aff0Aff1Aff2Ignored).unwrap(),
+            )
+        }
         .unwrap();
     }
 }
