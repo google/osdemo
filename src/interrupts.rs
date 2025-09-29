@@ -8,12 +8,13 @@ use crate::{
 };
 use alloc::collections::btree_map::BTreeMap;
 use arm_gic::{
-    IntId,
+    IntId, UniqueMmioPointer,
     gicv3::{
-        GicV3, InterruptGroup,
+        GicCpuInterface, GicV3, InterruptGroup,
         registers::{Gicd, GicrSgi},
     },
 };
+use core::ptr::NonNull;
 use flat_device_tree::Fdt;
 use log::{info, trace};
 use percore::{ExceptionLock, exception_free};
@@ -91,8 +92,8 @@ pub fn remove_private_irq_handler(intid: IntId) -> Option<IrqHandler> {
 ///
 /// Panics if there is no no pending interrupt, or no registered handler for the pending interrupt.
 pub fn handle_irq() {
-    let intid =
-        GicV3::get_and_acknowledge_interrupt(InterruptGroup::Group1).expect("No pending interrupt");
+    let intid = GicCpuInterface::get_and_acknowledge_interrupt(InterruptGroup::Group1)
+        .expect("No pending interrupt");
     trace!("IRQ: {intid:?}");
     exception_free(|token| {
         if let Some(handler) = PRIVATE_IRQ_HANDLERS
@@ -136,8 +137,8 @@ unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
     // SAFETY: Our caller promised that the device tree is accurate and we are only called once.
     let gic = unsafe {
         GicV3::new(
-            gicd_region.starting_address as _,
-            gicr_region.starting_address as _,
+            UniqueMmioPointer::new(NonNull::new(gicd_region.starting_address as _).unwrap()),
+            NonNull::new(gicr_region.starting_address as _).unwrap(),
             cpu_count,
             false,
         )
@@ -175,6 +176,6 @@ pub fn secondary_init_gic() {
         let mut gic = GIC.get().unwrap().lock();
         gic.init_cpu(cpu);
     }
-    GicV3::enable_group1(true);
-    GicV3::set_priority_mask(0xff);
+    GicCpuInterface::enable_group1(true);
+    GicCpuInterface::set_priority_mask(0xff);
 }

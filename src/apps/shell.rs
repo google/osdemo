@@ -9,7 +9,7 @@ use crate::{
     },
     devices::Devices,
 };
-use arm_gic::{gicv3::GicV3, irq_enable};
+use arm_gic::{gicv3::GicCpuInterface, irq_enable};
 use arm_pl031::Rtc;
 use arrayvec::ArrayVec;
 use core::str;
@@ -37,7 +37,7 @@ pub fn main(
     fdt: &Fdt,
 ) {
     info!("Configuring IRQs...");
-    GicV3::set_priority_mask(0xff);
+    GicCpuInterface::set_priority_mask(0xff);
     alarm::irq_setup();
     irq_enable();
 

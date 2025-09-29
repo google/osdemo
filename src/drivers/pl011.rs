@@ -5,13 +5,13 @@
 use super::InterruptDriven;
 use arm_gic::{
     IntId,
-    gicv3::{GicV3, InterruptGroup},
+    gicv3::{GicCpuInterface, InterruptGroup},
 };
 use arm_pl011_uart::{Interrupts, Uart};
 
 impl InterruptDriven for Uart<'_> {
     fn handle_irq(&mut self, intid: IntId) {
         self.clear_interrupts(Interrupts::RXI);
-        GicV3::end_interrupt(intid, InterruptGroup::Group1);
+        GicCpuInterface::end_interrupt(intid, InterruptGroup::Group1);
     }
 }
