@@ -23,9 +23,9 @@ dependencies = [
 
 [[package]]
 name = "arm-gic"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08736ece7a2b5dc9645d999af866e2df13c7ddef9da55cd20e961b53eb0ea462"
+checksum = "fc8a5b06c02f993e98b0b3eb95c3acefb6889cc33a630621fb3e6c564502c2b0"
 dependencies = [
  "bitflags",
  "safe-mmio",
