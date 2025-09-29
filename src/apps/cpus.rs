@@ -10,7 +10,7 @@ use crate::{
 };
 use arm_gic::{
     IntId,
-    gicv3::{GicV3, SgiTarget, SgiTargetGroup},
+    gicv3::{GicCpuInterface, SgiTarget, SgiTargetGroup},
     irq_enable, wfi,
 };
 use embedded_io::Write;
@@ -69,8 +69,8 @@ fn secondary_entry(arg: u64) -> ! {
         let mut gic = GIC.get().unwrap().lock();
         for i in 0..IntId::SGI_COUNT {
             let sgi = IntId::sgi(i);
-            gic.enable_interrupt(sgi, Some(cpu), true);
-            gic.set_interrupt_priority(sgi, Some(cpu), 0x80);
+            gic.enable_interrupt(sgi, Some(cpu), true).unwrap();
+            gic.set_interrupt_priority(sgi, Some(cpu), 0x80).unwrap();
         }
     }
     for sgi in 0..IntId::SGI_COUNT {
@@ -188,5 +188,5 @@ pub fn sgi<'a>(console: &mut impl Write, mut args: impl Iterator<Item = &'a str>
 
     let intid = IntId::sgi(id);
     writeln!(console, "Sending {intid:?} to all CPUs").unwrap();
-    GicV3::send_sgi(intid, SgiTarget::All, SgiTargetGroup::CurrentGroup1);
+    GicCpuInterface::send_sgi(intid, SgiTarget::All, SgiTargetGroup::CurrentGroup1).unwrap();
 }

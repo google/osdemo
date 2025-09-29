@@ -8,7 +8,7 @@ use crate::{
 };
 use arm_gic::{
     IntId, Trigger,
-    gicv3::{GicV3, InterruptGroup},
+    gicv3::{GicCpuInterface, InterruptGroup},
 };
 use arm_pl031::Rtc;
 use chrono::Duration;
@@ -24,9 +24,12 @@ pub fn irq_setup() {
     let mut gic = GIC.get().unwrap().lock();
 
     set_shared_irq_handler(PlatformImpl::RTC_IRQ, &irq_handle);
-    gic.set_interrupt_priority(PlatformImpl::RTC_IRQ, None, 0x80);
-    gic.set_trigger(PlatformImpl::RTC_IRQ, None, Trigger::Level);
-    gic.enable_interrupt(PlatformImpl::RTC_IRQ, None, true);
+    gic.set_interrupt_priority(PlatformImpl::RTC_IRQ, None, 0x80)
+        .unwrap();
+    gic.set_trigger(PlatformImpl::RTC_IRQ, None, Trigger::Level)
+        .unwrap();
+    gic.enable_interrupt(PlatformImpl::RTC_IRQ, None, true)
+        .unwrap();
 }
 
 /// Removes our RTC IRQ handler.
@@ -44,7 +47,7 @@ fn irq_handle(_intid: IntId) {
 pub fn irq_finish(rtc: &mut Rtc) {
     if ALARM_FIRED.swap(false, Ordering::SeqCst) {
         rtc.clear_interrupt();
-        GicV3::end_interrupt(PlatformImpl::RTC_IRQ, InterruptGroup::Group1);
+        GicCpuInterface::end_interrupt(PlatformImpl::RTC_IRQ, InterruptGroup::Group1);
         info!("Alarm fired, clearing");
     }
 }
