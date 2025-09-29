@@ -159,5 +159,5 @@ unsafe impl Hal for VirtioHal {
 }
 
 fn virt_to_phys(vaddr: usize) -> PhysAddr {
-    vaddr
+    vaddr as _
 }
