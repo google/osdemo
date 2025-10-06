@@ -41,7 +41,7 @@ checksum = "8797e113733a36b5fa906c81aefc126d255b88dd1c10a737749aa22ec7736b6a"
 dependencies = [
  "bitflags",
  "embedded-hal-nb",
- "embedded-io",
+ "embedded-io 0.6.1",
  "safe-mmio",
  "thiserror",
  "zerocopy",
@@ -115,6 +115,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
 
 [[package]]
+name = "embedded-io"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9eb1aa714776b75c7e67e1da744b81a129b3ff919c8712b5e1b32252c1f07cc7"
+
+[[package]]
 name = "enumn"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -175,7 +181,7 @@ dependencies = [
  "bitflags",
  "buddy_system_allocator",
  "chrono",
- "embedded-io",
+ "embedded-io 0.7.1",
  "flat_device_tree",
  "log",
  "percore",
