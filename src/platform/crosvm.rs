@@ -73,6 +73,6 @@ impl Platform for Crosvm {
         gic.set_trigger(Self::CONSOLE_IRQ, None, Trigger::Edge)
             .unwrap();
         gic.enable_interrupt(Self::CONSOLE_IRQ, None, true).unwrap();
-        set_shared_irq_handler(Self::CONSOLE_IRQ, &Console::<Uart>::handle_irq).unwrap();
+        set_shared_irq_handler(Self::CONSOLE_IRQ, &Console::<Uart>::handle_irq);
     }
 }
