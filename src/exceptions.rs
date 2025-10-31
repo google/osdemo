@@ -53,19 +53,46 @@ extern "C" fn serr_lower(_elr: u64, _spsr: u64) {
 }
 
 fn esr() -> u64 {
-    let mut esr: u64;
-    // SAFETY: This only reads a system register.
-    unsafe {
-        asm!("mrs {esr}, esr_el1", esr = out(reg) esr);
+    let esr: u64;
+    if current_el() == 2 {
+        // SAFETY: This only reads a system register.
+        unsafe {
+            asm!("mrs {esr}, esr_el2", esr = out(reg) esr);
+        }
+    } else {
+        // SAFETY: This only reads a system register.
+        unsafe {
+            asm!("mrs {esr}, esr_el1", esr = out(reg) esr);
+        }
     }
     esr
 }
 
 fn far() -> u64 {
-    let mut far: u64;
-    // SAFETY: This only reads a system register.
-    unsafe {
-        asm!("mrs {far}, far_el1", far = out(reg) far);
+    let far: u64;
+    if current_el() == 2 {
+        // SAFETY: This only reads a system register.
+        unsafe {
+            asm!("mrs {far}, far_el2", far = out(reg) far);
+        }
+    } else {
+        // SAFETY: This only reads a system register.
+        unsafe {
+            asm!("mrs {far}, far_el1", far = out(reg) far);
+        }
     }
     far
+}
+
+/// Returns the current exception level.
+pub fn current_el() -> u8 {
+    let current_el: u64;
+    // SAFETY: This only reads a system register.
+    unsafe {
+        asm!(
+            "mrs {current_el}, CurrentEL",
+            current_el = out(reg) current_el,
+        );
+    }
+    ((current_el >> 2) & 0b11) as u8
 }
