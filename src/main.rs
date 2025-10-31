@@ -23,7 +23,7 @@ mod platform;
 pub mod secondary_entry;
 mod virtio;
 
-use crate::interrupts::init_gic;
+use crate::{exceptions::current_el, interrupts::init_gic};
 use aarch64_paging::paging::{MemoryRegion, PAGE_SIZE};
 use aarch64_rt::entry;
 use alloc::vec::Vec;
@@ -62,7 +62,7 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
     // SAFETY: We only call `PlatformImpl::create` here, once on boot.
     let mut platform = unsafe { PlatformImpl::create() };
     let mut parts = platform.parts().unwrap();
-    writeln!(parts.console, "DemoOS starting...").unwrap();
+    writeln!(parts.console, "DemoOS starting at EL{}...", current_el()).unwrap();
     let mut console = console::init(parts.console);
     logger::init(console.shared(), LOG_LEVEL).unwrap();
     info!("FDT address: {fdt_address:?}");
