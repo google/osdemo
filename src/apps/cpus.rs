@@ -80,6 +80,7 @@ fn secondary_entry(arg: u64) -> ! {
 
     info!("Waiting for interrupt...");
     wfi();
+    info!("Finished waiting");
 
     for sgi in 0..IntId::SGI_COUNT {
         remove_private_irq_handler(IntId::sgi(sgi));

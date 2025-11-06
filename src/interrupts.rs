@@ -4,6 +4,7 @@
 
 use crate::{
     cpus::{PerCoreState, current_cpu_index, new_per_core_state_with_default},
+    exceptions::init_irq_routing,
     platform::{Platform, PlatformImpl},
 };
 use alloc::collections::btree_map::BTreeMap;
@@ -155,6 +156,8 @@ unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
 /// The given FDT must accurately reflect the platform, and the GIC device must already be mapped
 /// in the pagetable and not used anywhere else.
 pub unsafe fn init_gic(fdt: &Fdt) {
+    init_irq_routing();
+
     GIC.call_once(|| {
         // SAFETY: Our caller promised that the FDT is accurate, and the call_once ensures that this
         // isn't called more than once.
@@ -171,6 +174,8 @@ pub unsafe fn init_gic(fdt: &Fdt) {
 ///
 /// This will panic if `init_gic` has not already been called on the primary CPU core.
 pub fn secondary_init_gic() {
+    init_irq_routing();
+
     let cpu = current_cpu_index();
     {
         let mut gic = GIC.get().unwrap().lock();

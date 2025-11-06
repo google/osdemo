@@ -6,6 +6,8 @@ use crate::interrupts::handle_irq;
 use core::arch::asm;
 use log::trace;
 
+const HCR_EL2_IMO: u64 = 1 << 4;
+
 #[unsafe(no_mangle)]
 extern "C" fn sync_exception_current(elr: u64, _spsr: u64) {
     panic!(
@@ -95,4 +97,28 @@ pub fn current_el() -> u8 {
         );
     }
     ((current_el >> 2) & 0b11) as u8
+}
+
+fn hcr_el2() -> u64 {
+    let value;
+    // SAFETY: This only reads a system register.
+    unsafe {
+        asm!("mrs {value}, hcr_el2", value = out(reg) value);
+    }
+    value
+}
+
+fn write_hcr_el2(value: u64) {
+    // SAFETY: Writing to hcr_el2 is safe.
+    unsafe {
+        asm!("msr hcr_el2, {value}", value = in(reg) value);
+    }
+}
+
+/// Makes sure Physical IRQs are routed to the current exception level.
+pub fn init_irq_routing() {
+    if current_el() == 2 {
+        // Route Physical IRQs to EL2.
+        write_hcr_el2(hcr_el2() | HCR_EL2_IMO);
+    }
 }
