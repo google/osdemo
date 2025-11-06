@@ -2,7 +2,7 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::platform::PlatformImpl;
+use crate::{exceptions::current_el, platform::PlatformImpl};
 use aarch64_paging::{
     MapError, Mapping,
     paging::{
@@ -18,7 +18,7 @@ use core::{
 };
 use spin::Once;
 
-const ASID: usize = 1;
+const ASID: usize = 0;
 const ROOT_LEVEL: usize = 1;
 
 pub const DEVICE_ATTRIBUTES: Attributes = Attributes::VALID
@@ -85,12 +85,17 @@ pub struct IdMap {
 impl IdMap {
     /// Creates a new `IdMap` using the given page allocator.
     pub fn new(page_allocator: Heap<32>) -> Self {
+        let translation_regime = if current_el() == 2 {
+            TranslationRegime::El2
+        } else {
+            TranslationRegime::El1And0
+        };
         Self {
             mapping: Mapping::new(
                 IdTranslation { page_allocator },
                 ASID,
                 ROOT_LEVEL,
-                TranslationRegime::El1And0,
+                translation_regime,
                 VaRange::Lower,
             ),
         }
