@@ -55,14 +55,14 @@ pub fn start_cpu<'a>(console: &mut impl Write, fdt: &Fdt, mut args: impl Iterato
     }
     .unwrap();
     if state == AffinityState::Off {
-        let result = start_core_with_stack(id, secondary_entry, arg);
+        let result = start_core_with_stack(id, move || secondary_entry(arg));
         writeln!(console, " => {result:?}").unwrap();
     } else {
         writeln!(console, " already {state:?}").unwrap();
     }
 }
 
-fn secondary_entry(arg: u64) -> ! {
+fn secondary_entry(arg: u64) {
     let cpu = current_cpu_index();
     info!("Secondary CPU {cpu} started with arg {arg}");
     {
