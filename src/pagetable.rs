@@ -5,10 +5,8 @@
 use crate::{exceptions::current_el, platform::PlatformImpl};
 use aarch64_paging::{
     MapError, Mapping,
-    paging::{
-        Attributes, Constraints, MemoryRegion, PageTable, PhysicalAddress, Translation,
-        TranslationRegime, VaRange, VirtualAddress,
-    },
+    descriptor::{Attributes, PhysicalAddress, VirtualAddress},
+    paging::{Constraints, MemoryRegion, PageTable, Translation, TranslationRegime, VaRange},
 };
 use aarch64_rt::initial_pagetable;
 use buddy_system_allocator::Heap;
