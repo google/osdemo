@@ -43,7 +43,7 @@ use spin::{
 };
 use virtio::{find_virtio_mmio_devices, find_virtio_pci_devices};
 
-const LOG_LEVEL: LevelFilter = LevelFilter::Info;
+const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
 
 const PAGE_HEAP_SIZE: usize = 10 * PAGE_SIZE;
 static PAGE_HEAP: SpinMutex<[u8; PAGE_HEAP_SIZE]> = SpinMutex::new([0; PAGE_HEAP_SIZE]);
@@ -96,6 +96,8 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
     for pci_root in &pci_roots_info {
         pci_root.map_ranges(&mut idmap);
     }
+
+    debug!("Page table: {idmap:?}");
 
     info!("Activating page table...");
     // SAFETY: The page table maps all the memory we use, and we keep it until the end of the

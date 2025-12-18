@@ -76,6 +76,7 @@ impl Translation for IdTranslation {
 unsafe impl Sync for IdTranslation {}
 
 /// Manages a page table using identity mapping.
+#[derive(Debug)]
 pub struct IdMap {
     mapping: Mapping<IdTranslation>,
 }

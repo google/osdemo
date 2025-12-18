@@ -17,7 +17,7 @@ use arm_gic::{
 };
 use core::ptr::NonNull;
 use flat_device_tree::Fdt;
-use log::{info, trace};
+use log::{debug, info, trace};
 use percore::{ExceptionLock, exception_free};
 use spin::{Once, mutex::SpinMutex};
 
@@ -136,14 +136,10 @@ unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
     assert_eq!(gicd_region.size.unwrap(), size_of::<Gicd>());
     assert!(gicr_region.size.unwrap() >= size_of::<GicrSgi>() * cpu_count);
     // SAFETY: Our caller promised that the device tree is accurate and we are only called once.
-    let gic = unsafe {
-        GicV3::new(
-            UniqueMmioPointer::new(NonNull::new(gicd_region.starting_address as _).unwrap()),
-            NonNull::new(gicr_region.starting_address as _).unwrap(),
-            cpu_count,
-            false,
-        )
-    };
+    let gicd = NonNull::new(gicd_region.starting_address as _).unwrap();
+    let gicr = NonNull::new(gicr_region.starting_address as _).unwrap();
+    debug!("GICD: {gicd:?} GICR: {gicr:?} cpu_count {cpu_count}");
+    let gic = unsafe { GicV3::new(UniqueMmioPointer::new(gicd), gicr, cpu_count, false) };
 
     Some(gic)
 }
@@ -163,7 +159,9 @@ pub unsafe fn init_gic(fdt: &Fdt) {
         // isn't called more than once.
         let mut gic = unsafe { make_gic(fdt) }.expect("No GIC found in FDT");
 
+        debug!("gic.setup...");
         gic.setup(0);
+        debug!("Platform GIC setup");
         PlatformImpl::setup_gic(&mut gic);
 
         SpinMutex::new(gic)
