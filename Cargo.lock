@@ -93,6 +93,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "dtoolkit"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdbe5906adb25607fb9fa1ad8f13de9f6c5e98a8740695b40e75990cd0117f5c"
+dependencies = [
+ "thiserror",
+ "zerocopy",
+]
+
+[[package]]
 name = "embedded-hal"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -124,12 +134,6 @@ dependencies = [
  "quote",
  "syn",
 ]
-
-[[package]]
-name = "flat_device_tree"
-version = "3.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d29ba76ecf314f211601c5641d6fc4393d8f56a3b7764b3c8544639aad965a9"
 
 [[package]]
 name = "lock_api"
@@ -175,8 +179,8 @@ dependencies = [
  "bitflags",
  "buddy_system_allocator",
  "chrono",
+ "dtoolkit",
  "embedded-io",
- "flat_device_tree",
  "log",
  "percore",
  "smccc",
@@ -204,9 +208,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.36"
+version = "1.0.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
+checksum = "a338cc41d27e6cc6dce6cefc13a0729dfbb81c262b1f519331575dd80ef3067f"
 dependencies = [
  "proc-macro2",
 ]
@@ -303,18 +307,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.26"
+version = "0.8.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1039dd0d3c310cf05de012d8a39ff557cb0d23087fd44cad61df08fc31907a2f"
+checksum = "fd74ec98b9250adb3ca554bdde269adf631549f51d8a8f8f0a10b50f1cb298c3"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.26"
+version = "0.8.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ecf5b4cc5364572d7f4c329661bcc82724222973f2cab6f050a4e5c22f75181"
+checksum = "d8a8d209fdf45cf5138cbb5a506f6b52522a25afccc534d1475dad8e31105c6a"
 dependencies = [
  "proc-macro2",
  "quote",

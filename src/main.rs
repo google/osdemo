@@ -31,7 +31,11 @@ use apps::shell;
 use buddy_system_allocator::{Heap, LockedHeap};
 use core::{fmt::Write, ops::DerefMut};
 use devices::Devices;
-use flat_device_tree::{Fdt, node::FdtNode, standard_nodes};
+use dtoolkit::{
+    Node, Property,
+    fdt::{Fdt, FdtNode},
+    standard::{NodeStandard, Reg},
+};
 use log::{LevelFilter, debug, error, info};
 use pagetable::{DEVICE_ATTRIBUTES, IdMap, MEMORY_ATTRIBUTES, PAGETABLE};
 use pci::{PCI_COMPATIBLE, PCIE_COMPATIBLE, find_pci_roots};
@@ -68,9 +72,9 @@ fn main(x0: u64, _x1: u64, _x2: u64, _x3: u64) -> ! {
     info!("FDT address: {fdt_address:?}");
     // SAFETY: We trust that the FDT pointer we were given is valid, and this is the only time we
     // use it.
-    let fdt = unsafe { Fdt::from_ptr(fdt_address).unwrap() };
-    info!("FDT size: {} bytes", fdt.total_size());
-    debug!("FDT: {fdt:?}");
+    let fdt = unsafe { Fdt::from_raw(fdt_address).unwrap() };
+    info!("FDT size: {} bytes", fdt.data().len());
+    debug!("FDT: {fdt}");
     for reserved in fdt.memory_reservations() {
         info!("Reserved memory: {reserved:?}");
     }
@@ -148,65 +152,71 @@ fn add_to_heap<const ORDER: usize>(heap: &mut Heap<ORDER>, range: &'static mut [
 fn map_fdt_regions(fdt: &Fdt, idmap: &mut IdMap) {
     // Map memory.
     // TODO: Support multiple memory nodes, as allowed by the specification.
-    for fdt_region in fdt.memory().unwrap().regions() {
+    for fdt_region in fdt.memory().unwrap().reg().unwrap().unwrap() {
         let region = fdt_to_pagetable_region(&fdt_region);
+        let size = fdt_region.size::<u64>().unwrap();
         info!(
             "Mapping memory region {:?} from FDT ({} MiB)...",
             region,
-            fdt_region.size.unwrap() / (1024 * 1024)
+            size / (1024 * 1024)
         );
         idmap.map_range(&region, MEMORY_ATTRIBUTES).unwrap();
     }
 
     // Map MMIO regions for devices.
-    for node in fdt.all_nodes() {
-        if is_compatible(
-            &node,
-            &[
-                PCI_COMPATIBLE,
-                PCIE_COMPATIBLE,
-                "arm,gic-v3",
-                "arm,gic-v3-its",
-                "arm,pl011",
-                "arm,pl031",
-                "arm,pl061",
-                "arm,primecell",
-                "ns16550a",
-                "virtio,mmio",
-            ],
-        ) {
-            for fdt_region in node.reg() {
-                let region = fdt_to_pagetable_region(&fdt_region);
-                info!(
-                    "Mappping {} for {}, compatible={}",
-                    region,
-                    node.name,
-                    node.compatible().unwrap().first().unwrap()
-                );
-                idmap.map_range(&region, DEVICE_ATTRIBUTES).unwrap();
-            }
-        } else if let Some(compatible) = node.compatible() {
+    map_fdt_node_regions(&fdt.root(), idmap);
+}
+
+/// Maps MMIO regions for the device represented by the given FDT node and its children.
+fn map_fdt_node_regions(node: &FdtNode, idmap: &mut IdMap) {
+    if is_compatible(
+        &node,
+        &[
+            PCI_COMPATIBLE,
+            PCIE_COMPATIBLE,
+            "arm,gic-v3",
+            "arm,gic-v3-its",
+            "arm,pl011",
+            "arm,pl031",
+            "arm,pl061",
+            "arm,primecell",
+            "ns16550a",
+            "virtio,mmio",
+        ],
+    ) {
+        for fdt_region in node.reg().unwrap().unwrap() {
+            let region = fdt_to_pagetable_region(&fdt_region);
             info!(
-                "Ignoring {}, compatible={}",
-                node.name,
-                compatible.first().unwrap()
+                "Mappping {} for {}, compatible={}",
+                region,
+                node.name(),
+                node.compatible().unwrap().next().unwrap()
             );
-        } else {
-            info!("Ignoring {}", node.name);
+            idmap.map_range(&region, DEVICE_ATTRIBUTES).unwrap();
         }
+    } else if let Some(mut compatible) = node.compatible() {
+        info!(
+            "Ignoring {}, compatible={}",
+            node.name(),
+            compatible.next().unwrap()
+        );
+    } else {
+        info!("Ignoring {}", node.name());
+    }
+    for child in node.children() {
+        map_fdt_node_regions(&child, idmap);
     }
 }
 
-fn fdt_to_pagetable_region(region: &standard_nodes::MemoryRegion) -> MemoryRegion {
-    MemoryRegion::new(
-        region.starting_address as _,
-        region.starting_address as usize + region.size.unwrap(),
-    )
+fn fdt_to_pagetable_region(region: &Reg) -> MemoryRegion {
+    let address = region.address::<u64>().unwrap();
+    let size = region.size::<u64>().unwrap();
+    MemoryRegion::new(address as _, (address + size) as usize)
 }
 
 fn is_compatible(node: &FdtNode, with: &[&str]) -> bool {
-    if let Some(compatible) = node.compatible() {
-        compatible.all().any(|c| with.contains(&c))
+    if let Some(mut compatible) = node.compatible() {
+        compatible.any(|c| with.contains(&c))
     } else {
         false
     }
@@ -239,5 +249,5 @@ fn smc_for_psci() -> bool {
     let Some(method) = psci_node.property("method") else {
         return false;
     };
-    method.value == b"smc\0"
+    method.value() == b"smc\0"
 }

@@ -13,8 +13,8 @@ use arm_gic::{
     gicv3::{GicCpuInterface, SgiTarget, SgiTargetGroup},
     irq_enable, wfi,
 };
+use dtoolkit::fdt::Fdt;
 use embedded_io::Write;
-use flat_device_tree::Fdt;
 use log::{error, info};
 use smccc::{
     Hvc, Smc,
@@ -41,12 +41,12 @@ pub fn start_cpu<'a>(console: &mut impl Write, fdt: &Fdt, mut args: impl Iterato
         return;
     };
 
-    let Some(cpu) = fdt.cpus().nth(cpu_index) else {
+    let Some(cpu) = fdt.cpus().unwrap().cpus().nth(cpu_index) else {
         writeln!(console, "cpu_index out of bounds").unwrap();
         return;
     };
 
-    let id = cpu.ids().unwrap().first().unwrap() as u64;
+    let id = cpu.ids().unwrap().next().unwrap().to_int::<u64>().unwrap();
     writeln!(console, "CPU {cpu_index}: ID {id:#012x}").unwrap();
     let state = if smc_for_psci() {
         psci::affinity_info::<Smc>(id, LowestAffinityLevel::All)
@@ -141,8 +141,8 @@ pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
     )
     .unwrap();
 
-    for (i, cpu) in fdt.cpus().enumerate() {
-        let id = cpu.ids().unwrap().first().unwrap() as u64;
+    for (i, cpu) in fdt.cpus().unwrap().cpus().enumerate() {
+        let id = cpu.ids().unwrap().next().unwrap().to_int::<u64>().unwrap();
         writeln!(console, "CPU {i}: ID {id:#012x}").unwrap();
         if smc_for_psci {
             writeln!(

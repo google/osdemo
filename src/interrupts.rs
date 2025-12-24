@@ -16,7 +16,7 @@ use arm_gic::{
     },
 };
 use core::ptr::NonNull;
-use flat_device_tree::Fdt;
+use dtoolkit::{Node, fdt::Fdt, standard::NodeStandard};
 use log::{debug, info, trace};
 use percore::{ExceptionLock, exception_free};
 use spin::{Once, mutex::SpinMutex};
@@ -120,24 +120,26 @@ pub fn handle_irq() {
 /// The given FDT must accurately reflect the platform, and the GIC device must already be mapped
 /// in the pagetable and not used anywhere else.
 unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
-    let cpu_count = fdt.cpus().count();
+    let cpu_count = fdt.cpus().unwrap().cpus().count();
 
-    let node = fdt.find_compatible(&["arm,gic-v3"])?;
-    info!("Found GIC FDT node {}", node.name);
-    let mut reg = node.reg();
+    let node = fdt.root().find_compatible("arm,gic-v3").next()?;
+    info!("Found GIC FDT node {}", node.name());
+    let mut reg = node.reg().unwrap().unwrap();
     let gicd_region = reg.next().expect("GICD region missing");
     let gicr_region = reg.next().expect("GICR region missing");
     info!("  GICD: {gicd_region:?}");
     info!("  GICR: {gicr_region:?}");
+    let gicr_region_size = gicr_region.size::<u64>().unwrap() as usize;
+    let gicd_region_size = gicd_region.size::<u64>().unwrap() as usize;
     info!(
         "  GICR space for {} CPUs",
-        gicr_region.size.unwrap() / size_of::<GicrSgi>()
+        gicr_region_size / size_of::<GicrSgi>()
     );
-    assert_eq!(gicd_region.size.unwrap(), size_of::<Gicd>());
-    assert!(gicr_region.size.unwrap() >= size_of::<GicrSgi>() * cpu_count);
+    assert_eq!(gicd_region_size, size_of::<Gicd>());
+    assert!(gicr_region_size >= size_of::<GicrSgi>() * cpu_count);
     // SAFETY: Our caller promised that the device tree is accurate and we are only called once.
-    let gicd = NonNull::new(gicd_region.starting_address as _).unwrap();
-    let gicr = NonNull::new(gicr_region.starting_address as _).unwrap();
+    let gicd = NonNull::new(gicd_region.address::<u64>().unwrap() as _).unwrap();
+    let gicr = NonNull::new(gicr_region.address::<u64>().unwrap() as _).unwrap();
     debug!("GICD: {gicd:?} GICR: {gicr:?} cpu_count {cpu_count}");
     let gic = unsafe { GicV3::new(UniqueMmioPointer::new(gicd), gicr, cpu_count, false) };
 

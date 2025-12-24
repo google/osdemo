@@ -5,7 +5,7 @@
 use crate::{devices::Devices, is_compatible};
 use alloc::alloc::{alloc_zeroed, dealloc, handle_alloc_error};
 use core::{alloc::Layout, mem::size_of, ptr::NonNull};
-use flat_device_tree::Fdt;
+use dtoolkit::{Node, fdt::Fdt};
 use log::{debug, error, info, warn};
 use virtio_drivers::{
     BufferDirection, Hal, PAGE_SIZE, PhysAddr,
@@ -32,21 +32,23 @@ const VIRTIO_MMIO_COMPATIBLE: &str = "virtio,mmio";
 /// Any VirtIO MMIO devices in the given device tree must exist and be mapped appropriately, and
 /// must not be constructed anywhere else.
 pub unsafe fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
-    for node in fdt.all_nodes() {
+    for node in fdt.root().children() {
+        let node_name = node.name();
         if is_compatible(&node, &[VIRTIO_MMIO_COMPATIBLE]) {
-            debug!("Found VirtIO MMIO device {}", node.name);
-            if let Some(region) = node.reg().next() {
-                let region_size = region.size.unwrap_or(0);
+            debug!("Found VirtIO MMIO device {}", node_name);
+            if let Some(region) = node.reg().unwrap().unwrap().next() {
+                let region_size = region.size::<u64>().unwrap() as usize;
                 if region_size < size_of::<VirtIOHeader>() {
                     error!(
                         "VirtIO MMIO device {} region smaller than VirtIO header size ({} < {})",
-                        node.name,
+                        node_name,
                         region_size,
                         size_of::<VirtIOHeader>()
                     );
                 } else {
                     let header =
-                        NonNull::new(region.starting_address as *mut VirtIOHeader).unwrap();
+                        NonNull::new(region.address::<u64>().unwrap() as *mut VirtIOHeader)
+                            .unwrap();
                     // SAFETY: The caller promised that the device tree is correct, VirtIO MMIO
                     // devices are mapped, and no aliases are constructed to the MMIO region.
                     match unsafe { MmioTransport::new(header, region_size) } {
@@ -69,7 +71,7 @@ pub unsafe fn find_virtio_mmio_devices(fdt: &Fdt, devices: &mut Devices) {
                     }
                 }
             } else {
-                error!("VirtIO MMIO device {} missing region", node.name);
+                error!("VirtIO MMIO device {} missing region", node_name);
             }
         }
     }

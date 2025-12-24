@@ -11,7 +11,11 @@ use core::{
     cmp::min,
     fmt::{self, Debug, Display, Formatter},
 };
-use flat_device_tree::{Fdt, node::FdtNode, standard_nodes::MemoryRange};
+use dtoolkit::{
+    Node,
+    fdt::{Fdt, FdtNode},
+    standard::{NodeStandard, Range},
+};
 use log::{info, warn};
 use virtio_drivers::transport::pci::bus::{
     BarInfo, Cam, Command, DeviceFunction, MemoryBarType, MmioCam, PciError, PciRoot,
@@ -29,16 +33,14 @@ pub struct PciRootInfo {
 
 impl PciRootInfo {
     fn for_fdt_node(pci_node: FdtNode, cam: Cam, bar_range_limit: usize) -> Self {
-        let region = pci_node.reg().next().unwrap();
-        info!(
-            "Reg: {:?}-{:#x}",
-            region.starting_address,
-            region.starting_address as usize + region.size.unwrap()
-        );
-        assert_eq!(region.size.unwrap(), cam.size() as usize);
+        let region = pci_node.reg().unwrap().unwrap().next().unwrap();
+        let address = region.address::<u64>().unwrap();
+        let size = region.size::<u64>().unwrap();
+        info!("Reg: {:#x}-{:#x}", address, address + size);
+        assert_eq!(size, cam.size().into());
 
         let mut ranges = Vec::new();
-        for range in pci_node.ranges() {
+        for range in pci_node.ranges().unwrap().unwrap() {
             let mut range = PciRange::from(range);
             info!("PCI range {range}");
             if matches!(
@@ -61,7 +63,7 @@ impl PciRootInfo {
 
         Self {
             cam,
-            mmio_base: region.starting_address as *mut u8,
+            mmio_base: address as *mut u8,
             ranges,
         }
     }
@@ -107,15 +109,17 @@ impl PciRootInfo {
 /// BAR ranges higher than the given address limit will be ignored.
 pub fn find_pci_roots(fdt: &Fdt, bar_range_limit: usize) -> Vec<PciRootInfo> {
     let mut pci_roots = Vec::new();
-    if let Some(pci_node) = fdt.find_compatible(&[PCI_COMPATIBLE]) {
-        info!("PCI node: {}", pci_node.name);
+    let fdt_root = fdt.root();
+    for pci_node in fdt_root.find_compatible(PCI_COMPATIBLE) {
+        info!("PCI node: {}", pci_node.name());
         pci_roots.push(PciRootInfo::for_fdt_node(
             pci_node,
             Cam::MmioCam,
             bar_range_limit,
         ))
-    } else if let Some(pcie_node) = fdt.find_compatible(&[PCIE_COMPATIBLE]) {
-        info!("PCIE node: {}", pcie_node.name);
+    }
+    for pcie_node in fdt_root.find_compatible(PCIE_COMPATIBLE) {
+        info!("PCIE node: {}", pcie_node.name());
         pci_roots.push(PciRootInfo::for_fdt_node(
             pcie_node,
             Cam::Ecam,
@@ -210,13 +214,14 @@ impl PciRange {
     }
 }
 
-impl From<MemoryRange> for PciRange {
-    fn from(range: MemoryRange) -> Self {
+impl From<Range<'_>> for PciRange {
+    fn from(range: Range) -> Self {
+        let child_bus_address = range.child_bus_address::<u128>().unwrap();
         Self {
-            cpu_physical: range.parent_bus_address,
-            bus_address: range.child_bus_address,
-            size: range.size,
-            flags: PciMemoryFlags(range.child_bus_address_hi),
+            cpu_physical: range.parent_bus_address::<u64>().unwrap() as usize,
+            bus_address: child_bus_address as usize,
+            size: range.length::<u64>().unwrap() as usize,
+            flags: PciMemoryFlags((child_bus_address >> 64) as u32),
         }
     }
 }

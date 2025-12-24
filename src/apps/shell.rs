@@ -13,8 +13,8 @@ use arm_gic::{gicv3::GicCpuInterface, irq_enable};
 use arm_pl031::Rtc;
 use arrayvec::ArrayVec;
 use core::str;
+use dtoolkit::fdt::Fdt;
 use embedded_io::{Read, ReadReady, Write};
-use flat_device_tree::Fdt;
 use log::info;
 use virtio_drivers::{
     Hal,
@@ -107,7 +107,7 @@ fn date(console: &mut (impl Write + Read), rtc: &mut Rtc) {
 }
 
 fn dtdump(console: &mut impl Write, fdt: &Fdt) {
-    writeln!(console, "{fdt:?}").unwrap();
+    writeln!(console, "{fdt}").unwrap();
 }
 
 fn help(console: &mut (impl Write + Read)) {

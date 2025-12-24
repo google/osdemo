@@ -37,15 +37,14 @@ pub fn current_cpu_index() -> usize {
 
 /// Returns the total number of CPUs on the system.
 pub fn cpu_count() -> usize {
-    FDT.get().unwrap().cpus().count()
+    FDT.get().unwrap().cpus().unwrap().cpus().count()
 }
 
 /// Returns the index in the FDT of the CPU core with the given MPIDR affinity fields, if it exists.
 fn mpidr_to_cpu_index(mpidr_affinity: u64) -> Option<usize> {
-    FDT.get()
-        .unwrap()
-        .cpus()
-        .position(|cpu| cpu.ids().unwrap().first().unwrap() as u64 == mpidr_affinity)
+    FDT.get().unwrap().cpus().unwrap().cpus().position(|cpu| {
+        cpu.ids().unwrap().next().unwrap().to_int::<u64>().unwrap() == mpidr_affinity
+    })
 }
 
 /// An implementation of `percore::Cores`, to return the index of the curren CPU core.
