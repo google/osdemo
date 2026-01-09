@@ -170,7 +170,7 @@ fn map_fdt_regions(fdt: &Fdt, idmap: &mut IdMap) {
 /// Maps MMIO regions for the device represented by the given FDT node and its children.
 fn map_fdt_node_regions(node: &FdtNode, idmap: &mut IdMap) {
     if is_compatible(
-        &node,
+        node,
         &[
             PCI_COMPATIBLE,
             PCIE_COMPATIBLE,

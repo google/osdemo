@@ -183,12 +183,10 @@ impl PciBarAllocator {
     }
 
     fn allocate64(&mut self, layout: Layout, prefetchable: bool) -> u64 {
-        if prefetchable {
-            if let Some(allocation) = self.prefetchable_memory64.alloc_aligned(layout) {
-                return allocation.try_into().unwrap();
-            }
-            // If prefetchable allocation fails then fall back to non-prefetchable.
+        if prefetchable && let Some(allocation) = self.prefetchable_memory64.alloc_aligned(layout) {
+            return allocation.try_into().unwrap();
         }
+        // If prefetchable allocation fails then fall back to non-prefetchable.
 
         if let Some(allocation) = self.memory64.alloc_aligned(layout) {
             allocation.try_into().unwrap()
