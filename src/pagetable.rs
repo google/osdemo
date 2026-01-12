@@ -63,7 +63,11 @@ impl Translation for IdTranslation {
 
     unsafe fn deallocate_table(&mut self, page_table: NonNull<PageTable>) {
         let layout = Layout::new::<PageTable>();
-        self.page_allocator.dealloc(page_table.cast(), layout);
+        // SAFETY: Our caller promises that the page table was allocated by `allocate_table` and not
+        // yet deallocated, and it won't be used after this.
+        unsafe {
+            self.page_allocator.dealloc(page_table.cast(), layout);
+        }
     }
 
     fn physical_to_virtual(&self, pa: PhysicalAddress) -> NonNull<PageTable> {
