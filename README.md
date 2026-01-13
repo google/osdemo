@@ -6,6 +6,7 @@ This crate demonstrates how to use a number of aarch64-specific crates:
 
 - `aarch64-paging` for page table management.
 - `aarch64-rt` for the entry point and exception handling.
+- `arm-sysregs` for accessing system registers.
 - `smccc` for PSCI and other standard SMC calls to EL3 firmware.
 
 As well as some more general crates for embedded development:

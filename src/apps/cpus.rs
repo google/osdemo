@@ -3,7 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use crate::{
-    cpus::{MPIDR_AFFINITY_MASK, MPIDR_MT_BIT, MPIDR_U_BIT, current_cpu_index, read_mpidr_el1},
+    cpus::{MPIDR_AFFINITY_MASK, current_cpu_index},
     interrupts::{GIC, remove_private_irq_handler, set_private_irq_handler},
     secondary_entry::start_core_with_stack,
     smc_for_psci,
@@ -13,6 +13,7 @@ use arm_gic::{
     gicv3::{GicCpuInterface, SgiTarget, SgiTargetGroup},
     irq_enable, wfi,
 };
+use arm_sysregs::{MpidrEl1, read_mpidr_el1};
 use dtoolkit::fdt::Fdt;
 use embedded_io::Write;
 use log::{error, info};
@@ -120,9 +121,9 @@ pub fn cpus(console: &mut impl Write, fdt: &Fdt) {
     .unwrap();
 
     let mpidr = read_mpidr_el1();
-    let uniprocessor = mpidr & MPIDR_U_BIT != 0;
-    let multithreading = mpidr & MPIDR_MT_BIT != 0;
-    let current_cpu = mpidr & MPIDR_AFFINITY_MASK;
+    let uniprocessor = mpidr.contains(MpidrEl1::U);
+    let multithreading = mpidr.contains(MpidrEl1::MT);
+    let current_cpu = mpidr.bits() & MPIDR_AFFINITY_MASK;
     writeln!(
         console,
         "MPIDR {mpidr:#012x}: uniprocessor {uniprocessor}, multithreading {multithreading}"
