@@ -12,6 +12,7 @@ This crate demonstrates how to use a number of aarch64-specific crates:
 As well as some more general crates for embedded development:
 
 - `buddy_system_allocator` for heap allocation.
+- `dtoolkit` for device tree parsing.
 - `percore` for exception masking.
 
 And some device driver crates:
