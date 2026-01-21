@@ -5,7 +5,7 @@
 use crate::interrupts::handle_irq;
 use aarch64_rt::{ExceptionHandlers, RegisterStateRef, exception_handlers};
 use arm_sysregs::{
-    HcrEl2, read_esr_el1, read_esr_el2, read_far_el1, read_far_el2, read_hcr_el2, read_sysreg,
+    HcrEl2, read_currentel, read_esr_el1, read_esr_el2, read_far_el1, read_far_el2, read_hcr_el2,
     write_hcr_el2,
 };
 use log::trace;
@@ -45,11 +45,9 @@ fn far() -> u64 {
     }
 }
 
-read_sysreg!(currentel, u64, safe);
-
 /// Returns the current exception level.
 pub fn current_el() -> u8 {
-    ((read_currentel() >> 2) & 0b11) as u8
+    read_currentel().el()
 }
 
 /// Makes sure Physical IRQs are routed to the current exception level.
