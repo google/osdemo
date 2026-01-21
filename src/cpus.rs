@@ -10,8 +10,6 @@ use percore::{Cores, ExceptionLock, PerCore};
 use spin::Lazy;
 
 pub const MPIDR_AFFINITY_MASK: u64 = 0xff00ffffff;
-pub const MPIDR_U_BIT: u64 = 1 << 30;
-pub const MPIDR_MT_BIT: u64 = 1 << 24;
 
 /// Reads the MPIDR value and returns the affinity bytes, masking out the other bits.
 pub fn mpidr_affinity() -> u64 {
