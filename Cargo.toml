@@ -26,7 +26,7 @@ chrono = { version = "0.4.43", default-features = false }
 embedded-io = "0.7.1"
 dtoolkit = "0.1.1"
 log = "0.4.29"
-percore = "0.2.1"
+percore = "0.2.2"
 smccc = "0.2.2"
 spin = { version = "0.10.0", features = [
   "lazy",
