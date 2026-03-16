@@ -5,13 +5,16 @@
 use crate::{exceptions::current_el, platform::PlatformImpl};
 use aarch64_paging::{
     MapError, Mapping,
-    descriptor::{Attributes, PhysicalAddress, VirtualAddress},
-    paging::{Constraints, MemoryRegion, PageTable, Translation, TranslationRegime, VaRange},
+    descriptor::{
+        El1Attributes, El23Attributes, PagingAttributes, PhysicalAddress, VirtualAddress,
+    },
+    paging::{Constraints, El1And0, El2, MemoryRegion, PageTable, Translation, VaRange},
 };
 use aarch64_rt::initial_pagetable;
 use buddy_system_allocator::Heap;
 use core::{
     alloc::Layout,
+    marker::PhantomData,
     ptr::{self, NonNull},
 };
 use spin::Once;
@@ -19,32 +22,49 @@ use spin::Once;
 const ASID: usize = 0;
 const ROOT_LEVEL: usize = 1;
 
-pub const DEVICE_ATTRIBUTES: Attributes = Attributes::VALID
-    .union(Attributes::ATTRIBUTE_INDEX_0)
-    .union(Attributes::ACCESSED)
-    .union(Attributes::UXN);
-pub const MEMORY_ATTRIBUTES: Attributes = Attributes::VALID
-    .union(Attributes::ATTRIBUTE_INDEX_1)
-    .union(Attributes::INNER_SHAREABLE)
-    .union(Attributes::ACCESSED)
-    .union(Attributes::NON_GLOBAL);
+pub const EL1_DEVICE_ATTRIBUTES: El1Attributes = El1Attributes::VALID
+    .union(El1Attributes::ATTRIBUTE_INDEX_0)
+    .union(El1Attributes::ACCESSED)
+    .union(El1Attributes::UXN);
+pub const EL1_MEMORY_ATTRIBUTES: El1Attributes = El1Attributes::VALID
+    .union(El1Attributes::ATTRIBUTE_INDEX_1)
+    .union(El1Attributes::INNER_SHAREABLE)
+    .union(El1Attributes::ACCESSED)
+    .union(El1Attributes::NON_GLOBAL);
+const EL2_DEVICE_ATTRIBUTES: El23Attributes = El23Attributes::VALID
+    .union(El23Attributes::ATTRIBUTE_INDEX_0)
+    .union(El23Attributes::ACCESSED)
+    .union(El23Attributes::XN);
+const EL2_MEMORY_ATTRIBUTES: El23Attributes = El23Attributes::VALID
+    .union(El23Attributes::ATTRIBUTE_INDEX_1)
+    .union(El23Attributes::INNER_SHAREABLE)
+    .union(El23Attributes::ACCESSED)
+    .union(El23Attributes::NON_GLOBAL);
 
 pub static PAGETABLE: Once<IdMap> = Once::new();
 
 #[derive(Debug)]
-struct IdTranslation {
+pub struct IdTranslation<A: PagingAttributes> {
     page_allocator: Heap<32>,
+    _attributes: PhantomData<A>,
 }
 
-impl IdTranslation {
+impl<A: PagingAttributes> IdTranslation<A> {
+    fn new(page_allocator: Heap<32>) -> Self {
+        Self {
+            page_allocator,
+            _attributes: PhantomData,
+        }
+    }
+
     fn virtual_to_physical(va: VirtualAddress) -> PhysicalAddress {
         PhysicalAddress(va.0)
     }
 }
 
-impl Translation for IdTranslation {
-    fn allocate_table(&mut self) -> (NonNull<PageTable>, PhysicalAddress) {
-        let layout = Layout::new::<PageTable>();
+impl<A: PagingAttributes> Translation<A> for IdTranslation<A> {
+    fn allocate_table(&mut self) -> (NonNull<PageTable<A>>, PhysicalAddress) {
+        let layout = Layout::new::<PageTable<A>>();
         let pointer = self
             .page_allocator
             .alloc(layout)
@@ -61,8 +81,8 @@ impl Translation for IdTranslation {
         (table, PhysicalAddress(table.as_ptr() as usize))
     }
 
-    unsafe fn deallocate_table(&mut self, page_table: NonNull<PageTable>) {
-        let layout = Layout::new::<PageTable>();
+    unsafe fn deallocate_table(&mut self, page_table: NonNull<PageTable<A>>) {
+        let layout = Layout::new::<PageTable<A>>();
         // SAFETY: Our caller promises that the page table was allocated by `allocate_table` and not
         // yet deallocated, and it won't be used after this.
         unsafe {
@@ -70,51 +90,81 @@ impl Translation for IdTranslation {
         }
     }
 
-    fn physical_to_virtual(&self, pa: PhysicalAddress) -> NonNull<PageTable> {
-        NonNull::new(pa.0 as *mut PageTable).expect("Got physical address 0 for pagetable")
+    fn physical_to_virtual(&self, pa: PhysicalAddress) -> NonNull<PageTable<A>> {
+        NonNull::new(pa.0 as *mut PageTable<A>).expect("Got physical address 0 for pagetable")
     }
 }
 
 // SAFETY: An `&IdTranslation` only allows looking up the mapping from a physical to virtual
 // address, which is safe to do from any context.
-unsafe impl Sync for IdTranslation {}
+unsafe impl<A: PagingAttributes> Sync for IdTranslation<A> {}
 
-/// Manages a page table using identity mapping.
+/// Manages a page table using identity mapping, at either EL1 or EL2.
 #[derive(Debug)]
-pub struct IdMap {
-    mapping: Mapping<IdTranslation>,
+pub enum IdMap {
+    El1 {
+        mapping: Mapping<IdTranslation<El1Attributes>, El1And0>,
+    },
+    El2 {
+        mapping: Mapping<IdTranslation<El23Attributes>, El2>,
+    },
 }
 
 impl IdMap {
     /// Creates a new `IdMap` using the given page allocator.
     pub fn new(page_allocator: Heap<32>) -> Self {
-        let translation_regime = if current_el() == 2 {
-            TranslationRegime::El2
+        if current_el() == 2 {
+            Self::El2 {
+                mapping: Mapping::new(IdTranslation::new(page_allocator), ROOT_LEVEL, El2),
+            }
         } else {
-            TranslationRegime::El1And0
-        };
-        Self {
-            mapping: Mapping::new(
-                IdTranslation { page_allocator },
-                ASID,
-                ROOT_LEVEL,
-                translation_regime,
-                VaRange::Lower,
-            ),
+            Self::El1 {
+                mapping: Mapping::with_asid_and_va_range(
+                    IdTranslation::new(page_allocator),
+                    ASID,
+                    ROOT_LEVEL,
+                    El1And0,
+                    VaRange::Lower,
+                ),
+            }
         }
     }
 
     /// Returns the size in bytes of the virtual address space which can be mapped in this page
     /// table.
     pub fn size(&self) -> usize {
-        self.mapping.size()
+        match self {
+            IdMap::El1 { mapping } => mapping.size(),
+            IdMap::El2 { mapping } => mapping.size(),
+        }
     }
 
-    /// Identity-maps the given range of pages with the given flags.
-    pub fn map_range(&mut self, range: &MemoryRegion, flags: Attributes) -> Result<(), MapError> {
-        let pa = IdTranslation::virtual_to_physical(range.start());
-        self.mapping
-            .map_range(range, pa, flags, Constraints::empty())
+    /// Identity-maps the given range of pages as normal memory.
+    pub fn map_memory(&mut self, range: &MemoryRegion) -> Result<(), MapError> {
+        match self {
+            IdMap::El1 { mapping } => {
+                let pa = IdTranslation::<El1Attributes>::virtual_to_physical(range.start());
+                mapping.map_range(range, pa, EL1_MEMORY_ATTRIBUTES, Constraints::empty())
+            }
+            IdMap::El2 { mapping } => {
+                let pa = IdTranslation::<El23Attributes>::virtual_to_physical(range.start());
+                mapping.map_range(range, pa, EL2_MEMORY_ATTRIBUTES, Constraints::empty())
+            }
+        }
+    }
+
+    /// Identity-maps the given range of pages as device memory.
+    pub fn map_device(&mut self, range: &MemoryRegion) -> Result<(), MapError> {
+        match self {
+            IdMap::El1 { mapping } => {
+                let pa = IdTranslation::<El1Attributes>::virtual_to_physical(range.start());
+                mapping.map_range(range, pa, EL1_DEVICE_ATTRIBUTES, Constraints::empty())
+            }
+            IdMap::El2 { mapping } => {
+                let pa = IdTranslation::<El23Attributes>::virtual_to_physical(range.start());
+                mapping.map_range(range, pa, EL2_DEVICE_ATTRIBUTES, Constraints::empty())
+            }
+        }
     }
 
     /// Activates the page table by setting `TTBR0_EL1` to point to it.
@@ -126,12 +176,19 @@ impl IdMap {
     /// The caller must ensure that the page table doesn't unmap any memory which the program is
     /// using. The page table must not be dropped as long as its mappings are required, as it will
     /// automatically be deactivated when it is dropped.
-    pub unsafe fn activate(&mut self) {
+    pub unsafe fn activate(&self) {
         // SAFETY: The caller has ensured that the page table doesn't unmap any memory and is held
         // for long enough. Mappings are unique because it uses identity mapping, so it won't
         // introduce any aliases.
         unsafe {
-            self.mapping.activate();
+            match self {
+                IdMap::El1 { mapping } => {
+                    mapping.activate();
+                }
+                IdMap::El2 { mapping } => {
+                    mapping.activate();
+                }
+            }
         }
     }
 
@@ -147,11 +204,18 @@ impl IdMap {
     /// The caller must ensure that the page table doesn't unmap any memory which the program is
     /// using.
     pub unsafe fn activate_secondary(&'static self) {
-        assert!(self.mapping.active());
+        match self {
+            IdMap::El1 { mapping } => {
+                assert!(mapping.active());
+            }
+            IdMap::El2 { mapping } => {
+                assert!(mapping.active());
+            }
+        }
         // SAFETY: Our caller promised that the page table doesn't unmapping anything which the
         // program needs. The static lifetime of &self ensures that the page table isn't dropped.
         unsafe {
-            self.mapping.activate();
+            self.activate();
         }
     }
 }

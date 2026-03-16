@@ -37,7 +37,7 @@ use dtoolkit::{
     standard::{NodeStandard, Reg},
 };
 use log::{LevelFilter, debug, error, info};
-use pagetable::{DEVICE_ATTRIBUTES, IdMap, MEMORY_ATTRIBUTES, PAGETABLE};
+use pagetable::{IdMap, PAGETABLE};
 use pci::{PCI_COMPATIBLE, PCIE_COMPATIBLE, find_pci_roots};
 use platform::{Platform, PlatformImpl};
 use smccc::{Hvc, Smc, psci::system_off};
@@ -160,7 +160,7 @@ fn map_fdt_regions(fdt: &Fdt, idmap: &mut IdMap) {
             region,
             size / (1024 * 1024)
         );
-        idmap.map_range(&region, MEMORY_ATTRIBUTES).unwrap();
+        idmap.map_memory(&region).unwrap();
     }
 
     // Map MMIO regions for devices.
@@ -192,7 +192,7 @@ fn map_fdt_node_regions(node: &FdtNode, idmap: &mut IdMap) {
                 node.name(),
                 node.compatible().unwrap().next().unwrap()
             );
-            idmap.map_range(&region, DEVICE_ATTRIBUTES).unwrap();
+            idmap.map_device(&region).unwrap();
         }
     } else if let Some(mut compatible) = node.compatible() {
         info!(
