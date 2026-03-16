@@ -2,7 +2,7 @@
 // This project is dual-licensed under Apache 2.0 and MIT terms.
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
-use crate::pagetable::{DEVICE_ATTRIBUTES, IdMap};
+use crate::pagetable::IdMap;
 use aarch64_paging::paging::MemoryRegion;
 use alloc::vec::Vec;
 use buddy_system_allocator::FrameAllocator;
@@ -77,7 +77,7 @@ impl PciRootInfo {
             ) {
                 let memory_region = range.memory_region();
                 info!("Mappping {memory_region}");
-                idmap.map_range(&memory_region, DEVICE_ATTRIBUTES).unwrap();
+                idmap.map_device(&memory_region).unwrap();
             }
         }
     }

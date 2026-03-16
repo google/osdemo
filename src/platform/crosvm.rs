@@ -7,7 +7,7 @@ use crate::{
     console::Console,
     drivers::uart8250::Uart,
     interrupts::set_shared_irq_handler,
-    pagetable::{DEVICE_ATTRIBUTES, MEMORY_ATTRIBUTES},
+    pagetable::{EL1_DEVICE_ATTRIBUTES, EL1_MEMORY_ATTRIBUTES},
 };
 use aarch64_rt::InitialPagetable;
 use arm_gic::{IntId, Trigger, gicv3::GicV3};
@@ -30,11 +30,11 @@ impl Crosvm {
     pub const fn initial_idmap() -> InitialPagetable {
         let mut idmap = [0; 512];
         // 1 GiB of device mappings.
-        idmap[0] = DEVICE_ATTRIBUTES.bits();
+        idmap[0] = EL1_DEVICE_ATTRIBUTES.bits();
         // Another 1 GiB of device mappings.
-        idmap[1] = DEVICE_ATTRIBUTES.bits() | 0x40000000;
+        idmap[1] = EL1_DEVICE_ATTRIBUTES.bits() | 0x40000000;
         // 1 GiB of DRAM.
-        idmap[2] = MEMORY_ATTRIBUTES.bits() | 0x80000000;
+        idmap[2] = EL1_MEMORY_ATTRIBUTES.bits() | 0x80000000;
         InitialPagetable(idmap)
     }
 }
