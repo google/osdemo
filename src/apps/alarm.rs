@@ -6,10 +6,7 @@ use crate::{
     interrupts::{GIC, remove_shared_irq_handler, set_shared_irq_handler},
     platform::{Platform, PlatformImpl},
 };
-use arm_gic::{
-    IntId, Trigger,
-    gicv3::{GicCpuInterface, InterruptGroup},
-};
+use arm_gic::{IntId, InterruptGroup, Trigger, gicv3::GicCpuInterface};
 use arm_pl031::Rtc;
 use chrono::Duration;
 use core::sync::atomic::{AtomicBool, Ordering};

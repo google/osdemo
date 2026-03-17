@@ -9,9 +9,9 @@ use crate::{
 };
 use alloc::collections::btree_map::BTreeMap;
 use arm_gic::{
-    IntId, UniqueMmioPointer,
+    IntId, InterruptGroup, UniqueMmioPointer,
     gicv3::{
-        GicCpuInterface, GicV3, InterruptGroup,
+        GicCpuInterface, GicV3,
         registers::{Gicd, GicrSgi},
     },
 };

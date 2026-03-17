@@ -6,10 +6,7 @@
 //! provided by crosvm, and won't work with real hardware.
 
 use super::InterruptDriven;
-use arm_gic::{
-    IntId,
-    gicv3::{GicCpuInterface, InterruptGroup},
-};
+use arm_gic::{IntId, InterruptGroup, gicv3::GicCpuInterface};
 use core::convert::Infallible;
 use core::fmt;
 use embedded_io::{ErrorType, Read, ReadReady, Write, WriteReady};

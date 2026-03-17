@@ -23,12 +23,13 @@ dependencies = [
 
 [[package]]
 name = "arm-gic"
-version = "0.7.2"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c044ecf8760dd8ee5aa92c49cf7534942d289fb1f0247af92b5fbab8ab18a912"
+checksum = "b55de858f06d3e6f43358f6cd7f041d842d152813dc7dec69b4bb8ee00aa901a"
 dependencies = [
+ "arm-sysregs",
  "bitflags",
- "safe-mmio 0.2.7",
+ "safe-mmio",
  "thiserror",
  "zerocopy",
 ]
@@ -42,7 +43,7 @@ dependencies = [
  "bitflags",
  "embedded-hal-nb",
  "embedded-io",
- "safe-mmio 0.3.0",
+ "safe-mmio",
  "thiserror",
  "zerocopy",
 ]
@@ -252,15 +253,6 @@ checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
 name = "safe-mmio"
-version = "0.2.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0a69f884a1511aa811aa94e04559414a66b18ca63f50f84ca31e304f38bad0d"
-dependencies = [
- "zerocopy",
-]
-
-[[package]]
-name = "safe-mmio"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4813ee49326057f105d6d8ca3d8f9265095f26aa7b42094e487028403a594f4c"
@@ -329,7 +321,7 @@ dependencies = [
  "bitflags",
  "enumn",
  "log",
- "safe-mmio 0.3.0",
+ "safe-mmio",
  "thiserror",
  "zerocopy",
 ]

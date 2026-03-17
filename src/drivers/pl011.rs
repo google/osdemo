@@ -3,10 +3,7 @@
 // See LICENSE-APACHE and LICENSE-MIT for details.
 
 use super::InterruptDriven;
-use arm_gic::{
-    IntId,
-    gicv3::{GicCpuInterface, InterruptGroup},
-};
+use arm_gic::{IntId, InterruptGroup, gicv3::GicCpuInterface};
 use arm_pl011_uart::{Interrupts, Uart};
 
 impl InterruptDriven for Uart<'_> {
