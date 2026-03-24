@@ -209,6 +209,7 @@ dependencies = [
  "percore",
  "smccc",
  "spin",
+ "uart_16550",
  "virtio-drivers",
 ]
 
@@ -304,6 +305,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "uart_16550"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71cceed8939ba6ebde9d1e8a603b3c7f1a239a3db22e1ff465ed71ddca7a7d66"
+dependencies = [
+ "bitflags",
+ "embedded-io",
 ]
 
 [[package]]

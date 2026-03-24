@@ -29,13 +29,14 @@ use aarch64_rt::entry;
 use alloc::vec::Vec;
 use apps::shell;
 use buddy_system_allocator::{Heap, LockedHeap};
-use core::{fmt::Write, ops::DerefMut};
+use core::ops::DerefMut;
 use devices::Devices;
 use dtoolkit::{
     Node, Property,
     fdt::{Fdt, FdtNode},
     standard::{NodeStandard, Reg},
 };
+use embedded_io::Write;
 use log::{LevelFilter, debug, error, info};
 use pagetable::{IdMap, PAGETABLE};
 use pci::{PCI_COMPATIBLE, PCIE_COMPATIBLE, find_pci_roots};

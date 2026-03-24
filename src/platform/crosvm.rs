@@ -5,13 +5,13 @@
 use super::{Platform, PlatformParts};
 use crate::{
     console::Console,
-    drivers::uart8250::Uart,
     interrupts::set_shared_irq_handler,
     pagetable::{EL1_DEVICE_ATTRIBUTES, EL1_MEMORY_ATTRIBUTES},
 };
 use aarch64_rt::InitialPagetable;
 use arm_gic::{IntId, Trigger, gicv3::GicV3};
 use arm_pl031::Rtc;
+use uart_16550::{Config, Uart16550, backend::MmioBackend};
 
 /// Base address of the first 8250 UART.
 const UART_BASE_ADDRESS: *mut u8 = 0x03f8 as _;
@@ -20,7 +20,7 @@ const UART_BASE_ADDRESS: *mut u8 = 0x03f8 as _;
 const PL030_BASE_ADDRESS: *mut u32 = 0x2000 as _;
 
 pub struct Crosvm {
-    parts: Option<PlatformParts<Uart, Rtc>>,
+    parts: Option<PlatformParts<Uart16550<MmioBackend>, Rtc>>,
 }
 
 impl Crosvm {
@@ -40,7 +40,7 @@ impl Crosvm {
 }
 
 impl Platform for Crosvm {
-    type Console = Uart;
+    type Console = Uart16550<MmioBackend>;
     type Rtc = Rtc;
 
     const RTC_IRQ: IntId = IntId::spi(1);
@@ -48,9 +48,9 @@ impl Platform for Crosvm {
     unsafe fn create() -> Self {
         // SAFETY: There is a suitable UART at this base address on crosvm, and we have mapped it
         // with an appropriate device mapping. `create` is only called once so there are no aliases.
-        let mut uart = unsafe { Uart::new(UART_BASE_ADDRESS) };
-        // Enable the RBR data available interrupt.
-        uart.enable_interrupts(0b0001);
+        let mut uart = unsafe { Uart16550::new_mmio(UART_BASE_ADDRESS, 1) }.unwrap();
+        // Enables the RBR data available interrupt.
+        uart.init(Config::default()).unwrap();
         Self {
             // SAFETY: The various base addresses are valid and mapped, and `create` is only called
             // once so there are no aliases.
@@ -63,7 +63,7 @@ impl Platform for Crosvm {
         }
     }
 
-    fn parts(&mut self) -> Option<PlatformParts<Uart, Rtc>> {
+    fn parts(&mut self) -> Option<PlatformParts<Uart16550<MmioBackend>, Rtc>> {
         self.parts.take()
     }
 
@@ -73,6 +73,9 @@ impl Platform for Crosvm {
         gic.set_trigger(Self::CONSOLE_IRQ, None, Trigger::Edge)
             .unwrap();
         gic.enable_interrupt(Self::CONSOLE_IRQ, None, true).unwrap();
-        set_shared_irq_handler(Self::CONSOLE_IRQ, &Console::<Uart>::handle_irq);
+        set_shared_irq_handler(
+            Self::CONSOLE_IRQ,
+            &Console::<Uart16550<MmioBackend>>::handle_irq,
+        );
     }
 }
