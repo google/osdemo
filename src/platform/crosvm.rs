@@ -11,10 +11,11 @@ use crate::{
 use aarch64_rt::InitialPagetable;
 use arm_gic::{IntId, Trigger, gicv3::GicV3};
 use arm_pl031::Rtc;
+use core::ptr::NonNull;
 use uart_16550::{Config, Uart16550, backend::MmioBackend};
 
 /// Base address of the first 8250 UART.
-const UART_BASE_ADDRESS: *mut u8 = 0x03f8 as _;
+const UART_BASE_ADDRESS: NonNull<u8> = NonNull::new(0x03f8 as _).unwrap();
 
 /// Base address of the PL030 RTC.
 const PL030_BASE_ADDRESS: *mut u32 = 0x2000 as _;
