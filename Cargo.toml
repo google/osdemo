@@ -28,7 +28,7 @@ dtoolkit = "0.1.1"
 log = "0.4.29"
 percore = "0.2.4"
 smccc = "0.2.2"
-spin = { version = "0.11.0", features = [
+spin = { version = "0.12.0", features = [
   "lazy",
   "once",
   "spin_mutex",
