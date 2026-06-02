@@ -106,9 +106,9 @@ dependencies = [
 
 [[package]]
 name = "dtoolkit"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5427b960bccbff1c40fd8a246b346e3959551cb35bd93fc44fdbe292dfc455c9"
+checksum = "6d9ee64930d1433b5922f6d144d7d56705d25a75cff226d2e48dcdaaac362d50"
 dependencies = [
  "thiserror",
  "zerocopy",
