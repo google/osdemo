@@ -27,7 +27,7 @@ embedded-io = "0.7.1"
 dtoolkit = "0.1.1"
 log = "0.4.30"
 percore = "0.2.4"
-smccc = "0.2.2"
+smccc = "0.2.3"
 spin = { version = "0.12.0", features = [
   "lazy",
   "once",
