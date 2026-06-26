@@ -14,6 +14,7 @@ use arm_gic::{
     irq_enable, wfi,
 };
 use arm_sysregs::{MpidrEl1, read_mpidr_el1};
+use dtoolkit::ToCellInt;
 use dtoolkit::fdt::Fdt;
 use embedded_io::Write;
 use log::{error, info};
