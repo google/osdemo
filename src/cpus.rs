@@ -6,6 +6,7 @@ use crate::FDT;
 use alloc::boxed::Box;
 use arm_sysregs::read_mpidr_el1;
 use core::cell::RefCell;
+use dtoolkit::ToCellInt;
 use percore::{Cores, ExceptionLock, PerCore};
 use spin::Lazy;
 
