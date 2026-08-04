@@ -15,6 +15,7 @@ use buddy_system_allocator::Heap;
 use core::{
     alloc::Layout,
     marker::PhantomData,
+    num::NonZeroUsize,
     ptr::{self, NonNull},
 };
 use spin::Once;
@@ -91,7 +92,8 @@ impl<A: PagingAttributes> Translation<A> for IdTranslation<A> {
     }
 
     fn physical_to_virtual(&self, pa: PhysicalAddress) -> NonNull<PageTable<A>> {
-        NonNull::new(pa.0 as *mut PageTable<A>).expect("Got physical address 0 for pagetable")
+        let address = NonZeroUsize::new(pa.0).expect("Got physical address 0 for pagetable");
+        NonNull::with_exposed_provenance(address)
     }
 }
 
