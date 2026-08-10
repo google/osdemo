@@ -8,7 +8,7 @@ use arm_sysregs::el1::accessors::read_mpidr_el1;
 use core::cell::RefCell;
 use dtoolkit::ToCellInt;
 use percore::{Cores, ExceptionLock, PerCore};
-use spin::Lazy;
+use spin::LazyLock;
 
 pub const MPIDR_AFFINITY_MASK: u64 = 0xff00ffffff;
 
@@ -46,10 +46,10 @@ unsafe impl Cores for CoresImpl {
 }
 
 /// Per-core mutable state.
-pub type PerCoreState<T> = Lazy<PerCore<Box<[ExceptionLock<RefCell<T>>]>, CoresImpl>>;
+pub type PerCoreState<T> = LazyLock<PerCore<Box<[ExceptionLock<RefCell<T>>]>, CoresImpl>>;
 
 /// Creates a new instance a `PerCoreState`, initialising each core's instance of `T` to
 /// `T::default()` the first time it is used.
 pub const fn new_per_core_state_with_default<T: Default>() -> PerCoreState<T> {
-    Lazy::new(|| PerCore::new_with_default(cpu_count()))
+    LazyLock::new(|| PerCore::new_with_default(cpu_count()))
 }
