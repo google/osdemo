@@ -5,8 +5,12 @@
 use crate::interrupts::handle_irq;
 use aarch64_rt::{ExceptionHandlers, RegisterStateRef, exception_handlers};
 use arm_sysregs::{
-    HcrEl2, read_currentel, read_esr_el1, read_esr_el2, read_far_el1, read_far_el2, read_hcr_el2,
-    write_hcr_el2,
+    el0::accessors::read_currentel,
+    el1::accessors::{read_esr_el1, read_far_el1},
+    el2::{
+        accessors::{read_esr_el2, read_far_el2, read_hcr_el2, write_hcr_el2},
+        registers::HcrEl2,
+    },
 };
 use log::trace;
 
