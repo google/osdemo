@@ -13,7 +13,7 @@ use arm_gic::{
     gicv3::{GicCpuInterface, SgiTarget, SgiTargetGroup},
     irq_enable, wfi,
 };
-use arm_sysregs::{MpidrEl1, read_mpidr_el1};
+use arm_sysregs::el1::{accessors::read_mpidr_el1, registers::MpidrEl1};
 use dtoolkit::ToCellInt;
 use dtoolkit::fdt::Fdt;
 use embedded_io::Write;
