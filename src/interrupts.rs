@@ -141,7 +141,8 @@ unsafe fn make_gic(fdt: &Fdt) -> Option<GicV3<'static>> {
     let gicr = NonNull::new(gicr_region.address::<u64>().unwrap() as _).unwrap();
     debug!("GICD: {gicd:?} GICR: {gicr:?} cpu_count {cpu_count}");
     // SAFETY: Our caller promised that the device tree is accurate and we are only called once.
-    let gic = unsafe { GicV3::new(UniqueMmioPointer::new(gicd), gicr, cpu_count, false) };
+    let gic = unsafe { GicV3::new(UniqueMmioPointer::new(gicd), gicr, cpu_count) }
+        .expect("Error creating GICv3 driver");
 
     Some(gic)
 }

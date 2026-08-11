@@ -23,11 +23,11 @@ dependencies = [
 
 [[package]]
 name = "arm-gic"
-version = "0.8.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84372c6068152f635a04870779f0fa0d1b0273dd09dbe1c6747688693d061f06"
+checksum = "492963dde6a522f1c33383a5aecd9f34f7518e2f9e74baae932e7cf182f6c9b2"
 dependencies = [
- "arm-sysregs 0.2.9",
+ "arm-sysregs",
  "bitflags",
  "safe-mmio",
  "thiserror",
@@ -46,17 +46,6 @@ dependencies = [
  "safe-mmio",
  "thiserror",
  "zerocopy",
-]
-
-[[package]]
-name = "arm-sysregs"
-version = "0.2.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27f98a99c7c6da5d54aa4d6e54504956aade8cdb0de9cd9a2363eb66b1d659a9"
-dependencies = [
- "bitflags",
- "num_enum",
- "paste",
 ]
 
 [[package]]
@@ -263,7 +252,7 @@ dependencies = [
  "aarch64-rt",
  "arm-gic",
  "arm-pl011-uart",
- "arm-sysregs 0.4.0",
+ "arm-sysregs",
  "arm_pl031",
  "arrayvec",
  "bitflags",
@@ -320,9 +309,9 @@ checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
 name = "safe-mmio"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4813ee49326057f105d6d8ca3d8f9265095f26aa7b42094e487028403a594f4c"
+checksum = "ce5e4ed477d6ebc07e01ce97b87fe319e6b62d0ab2564594db6a8c4cdc29ffd9"
 dependencies = [
  "zerocopy",
 ]
@@ -411,18 +400,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.55"
+version = "0.8.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5a105cd7b140f6eeec8acff2ea38135d3cab283ada58540f629fe51e46696eb"
+checksum = "556764e583adb45a9f8d413c2a147fa7e8d821e48e12b14fd560b607998b75eb"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.55"
+version = "0.8.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fe976fb70c78cd64cccfe3a6fc142244e8a77b70959b30faf9d0ac37ee228eb"
+checksum = "f2ab42fc20575779bd240faa45f94a74256f755c0fa9e89f0ede20d91d0cdfc1"
 dependencies = [
  "proc-macro2",
  "quote",
