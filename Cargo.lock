@@ -215,12 +215,13 @@ dependencies = [
 
 [[package]]
 name = "dtoolkit"
-version = "0.3.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c62b199434ff32546ff227fc7fb2d5f8a22ad91d5256208c27cda6b10e6b5f73"
+checksum = "fc532741bd339dc67baa30dbd95257824a92f2aec4c5726062c7a811f072532d"
 dependencies = [
  "thiserror",
  "zerocopy",
+ "zerocopy-derive",
 ]
 
 [[package]]
