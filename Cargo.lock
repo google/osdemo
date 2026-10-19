@@ -382,9 +382,9 @@ dependencies = [
 
 [[package]]
 name = "uart_16550"
-version = "0.8.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1da273f7d8d9a37950980a0b75e680169c4cc47de6ed7dccf3749cbaf5976e2"
+checksum = "a97f2587e2352cdee51c1f55c3eef6ddd4bcb08a9119bfbce800dd4a198fc42a"
 dependencies = [
  "bitflags",
  "embedded-io",
