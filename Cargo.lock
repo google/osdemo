@@ -23,13 +23,13 @@ dependencies = [
 
 [[package]]
 name = "arm-gic"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aae38b5192f8463cef6c94ec9804774c2b106b16b0bb7c41401f9457d5e99229"
+checksum = "c515ae78e71b0da6996b07c9afc2be190df9f60a631fe201d3be991d1e3e7c17"
 dependencies = [
  "arm-sysregs",
  "bitflags",
- "safe-mmio 0.3.1",
+ "safe-mmio 0.4.0",
  "thiserror",
  "zerocopy",
 ]
@@ -422,18 +422,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.56"
+version = "0.8.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "556764e583adb45a9f8d413c2a147fa7e8d821e48e12b14fd560b607998b75eb"
+checksum = "e5fe1f8f1b06191a00962174c61aa5005e0bb391a6d80d07e24d115c01a92ed8"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.56"
+version = "0.8.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2ab42fc20575779bd240faa45f94a74256f755c0fa9e89f0ede20d91d0cdfc1"
+checksum = "863ad3ac83293fb4d740aedbfdc9240dd8d1a50c1099acd76ce80ce7c7230c7f"
 dependencies = [
  "proc-macro2",
  "quote",
